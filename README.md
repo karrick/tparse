@@ -6,10 +6,24 @@ epoch values, and values of "now", "now+DURATION", and "now-DURATION".
 In addition to the duration abbreviations recognized by time.ParseDuration, it recognizes the
 following abbreviations:
 
-  year: y
-  month: mo, mon, mth, mn
-  week: w
-  day: d
+#### year
+
+* y
+
+#### month
+
+* mo
+* mon
+* mth
+* mn
+
+#### week
+
+* w
+
+#### day
+
+* d
 
 ## Example
 
