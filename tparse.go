@@ -43,10 +43,7 @@ func Parse(layout, value string) (time.Time, error) {
 				return t, fmt.Errorf("can only subtract or add to now")
 			}
 			var nv string
-			y, m, d, nv, err = ymd(value[4:])
-			if err != nil {
-				return t, err
-			}
+			y, m, d, nv = ymd(value[4:])
 			if len(nv) > 0 {
 				duration, err = time.ParseDuration(nv)
 				if err != nil {
@@ -68,7 +65,7 @@ func fractionToNanos(fraction float64) int64 {
 	return int64(fraction * float64(time.Second/time.Nanosecond))
 }
 
-func ymd(value string) (int, int, int, string, error) {
+func ymd(value string) (int, int, int, string) {
 	// alternating numbers and strings
 	var y, m, d int
 	var accum int     // accumulates digits
@@ -110,5 +107,5 @@ func ymd(value string) (int, int, int, string, error) {
 		accum = 0
 		unit = unit[:0]
 	}
-	return y, m, d, string(unproc), nil
+	return y, m, d, string(unproc)
 }
