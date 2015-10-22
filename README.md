@@ -19,7 +19,7 @@ import (
 )
 
 func main() {
-	actual, err := tparse.Parse(time.RFC3339, "now+10ms")
+	actual, err := tparse.Parse(time.RFC3339, "now+1d3w4mo7y6h4m")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error: %s\n", err)
 		os.Exit(1)
