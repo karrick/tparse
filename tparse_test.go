@@ -71,3 +71,16 @@ func TestParseLayout(t *testing.T) {
 		t.Errorf("Actual: %#v; Expected: %#v", actual.Unix(), expected.Unix())
 	}
 }
+
+func TestParseNowPlusDay(t *testing.T) {
+	before := time.Now().UTC().AddDate(0, 0, 1).Add(time.Hour).Add(time.Minute)
+	actual, err := Parse("", "now+1h1d1m")
+	if err != nil {
+		t.Errorf("Actual: %#v; Expected: %#v", err, nil)
+	}
+	after := time.Now().UTC().AddDate(0, 0, 1).Add(time.Hour).Add(time.Minute)
+	actual = actual.UTC()
+	if before.After(actual) || actual.After(after) {
+		t.Errorf("Actual: %s; Expected between: %s and %s", actual, before, after)
+	}
+}
