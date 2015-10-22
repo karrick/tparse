@@ -10,23 +10,73 @@ import (
 	"unicode"
 )
 
-// Parse will return the time corresponding to the layout and value.  It also parses floating point
-// epoch values, and values of "now", "now+DURATION", and "now-DURATION".
-//
-// In addition to the duration abbreviations recognized by time.ParseDuration, it recognizes the
-// following abbreviations:
-//
-//   year: y
-//   month: mo, mon, mth, mn
-//   week: w
-//   day: d
+// Parse will return the time value corresponding to the specified layout and value.  It also parses
+// floating point and integer epoch values.
 func Parse(layout, value string) (time.Time, error) {
-	return ParseDict(layout, value, make(map[string]time.Time))
+	return ParseWithMap(layout, value, make(map[string]time.Time))
 }
 
-// ParseDict parses time values exactly like Parse, but allows a customizable dictionary of base
-// time names and their respective time values.
-func ParseDict(layout, value string, dict map[string]time.Time) (time.Time, error) {
+// ParseNow will return the time value corresponding to the specified layout and value.  It also
+// parses floating point and integer epoch values.  It recognizes the special string `now` and
+// replaces that with the time ParseNow is called.  This allows a suffix adding or subtracting
+// various values from the base time.  For instance, ParseNow(time.ANSIC, "now+1d") will return a
+// time corresponding to 24 hours from the moment the function is invoked.
+//
+// In addition to the duration abbreviations recognized by time.ParseDuration, it recognizes various
+// tokens for days, weeks, months, and years.
+//
+//	package main
+//
+//	import (
+//		"fmt"
+//		"os"
+//		"time"
+//
+//		"github.com/karrick/tparse"
+//	)
+//
+//	func main() {
+//		actual, err := tparse.ParseNow(time.RFC3339, "now+1d3w4mo7y6h4m")
+//		if err != nil {
+//			fmt.Fprintf(os.Stderr, "error: %s\n", err)
+//			os.Exit(1)
+//		}
+//
+//		fmt.Printf("time is: %s\n", actual)
+//	}
+func ParseNow(layout, value string) (time.Time, error) {
+	m := map[string]time.Time{"now": time.Now()}
+	return ParseWithMap(layout, value, m)
+}
+
+// ParseWithMap will return the time value corresponding to the specified layout and value.  It also
+// parses floating point and integer epoch values.  It accepts a map of strings to time.Time values,
+// and if the value string starts with one of the keys in the map, it replaces the string with the
+// corresponding time.Time value.
+//
+//	package main
+//
+//	import (
+//		"fmt"
+//		"os"
+//		"time"
+//
+//		"github.com/karrick/tparse"
+//	)
+//
+//	func main() {
+//		m := make(map[string]time.Time)
+//		m["start"] = start
+//
+//		end, err := tparse.ParseWithMap(time.RFC3339, "start+8h", m)
+//		if err != nil {
+//			fmt.Fprintf(os.Stderr, "error: %s\n", err)
+//			os.Exit(1)
+//		}
+//
+//		fmt.Printf("start: %s; end: %s\n", start, end)
+//	}
+func ParseWithMap(layout, value string, dict map[string]time.Time) (time.Time, error) {
 	if epoch, err := strconv.ParseFloat(value, 64); err == nil && epoch >= 0 {
 		trunc := math.Trunc(epoch)
 		nanos := fractionToNanos(epoch - trunc)
@@ -37,10 +87,6 @@ func ParseDict(layout, value string, dict map[string]time.Time) (time.Time, erro
 	var duration time.Duration
 	var direction = 1
 	var err error
-
-	if _, ok := dict["now"]; !ok {
-		dict["now"] = time.Now()
-	}
 
 	for k, v := range dict {
 		if strings.HasPrefix(value, k) {

@@ -25,7 +25,7 @@ func TestParseFloatingNegativeEpoch(t *testing.T) {
 
 func TestParseNow(t *testing.T) {
 	before := time.Now()
-	actual, err := Parse("", "now")
+	actual, err := ParseNow("", "now")
 	if err != nil {
 		t.Errorf("Actual: %#v; Expected: %#v", err, nil)
 	}
@@ -38,7 +38,7 @@ func TestParseNow(t *testing.T) {
 func TestParseNowMinusMilliisecond(t *testing.T) {
 	before := time.Now()
 	time.Sleep(10 * time.Millisecond)
-	actual, err := Parse("", "now-10ms")
+	actual, err := ParseNow("", "now-10ms")
 	if err != nil {
 		t.Errorf("Actual: %#v; Expected: %#v", err, nil)
 	}
@@ -50,7 +50,7 @@ func TestParseNowMinusMilliisecond(t *testing.T) {
 
 func TestParseNowPlusMilliisecond(t *testing.T) {
 	before := time.Now()
-	actual, err := Parse("", "now+10ms")
+	actual, err := ParseNow("", "now+10ms")
 	if err != nil {
 		t.Errorf("Actual: %#v; Expected: %#v", err, nil)
 	}
@@ -74,7 +74,7 @@ func TestParseLayout(t *testing.T) {
 
 func TestParseNowPlusDay(t *testing.T) {
 	before := time.Now().UTC().AddDate(0, 0, 1).Add(time.Hour).Add(time.Minute)
-	actual, err := Parse("", "now+1h1d1m")
+	actual, err := ParseNow("", "now+1h1d1m")
 	if err != nil {
 		t.Errorf("Actual: %#v; Expected: %#v", err, nil)
 	}
@@ -85,14 +85,14 @@ func TestParseNowPlusDay(t *testing.T) {
 	}
 }
 
-func TestParseDict(t *testing.T) {
+func TestParseUsingMap(t *testing.T) {
 	before := time.Now().UTC()
 	dict := map[string]time.Time{
 		"start": time.Now().UTC().AddDate(0, 0, -7),
 	}
 	after := time.Now().UTC()
 
-	actual, err := ParseDict(time.ANSIC, "start+1week", dict)
+	actual, err := ParseWithMap(time.ANSIC, "start+1week", dict)
 	if err != nil {
 		t.Errorf("Actual: %#v; Expected: %#v", err, nil)
 	}
@@ -101,4 +101,35 @@ func TestParseDict(t *testing.T) {
 	if before.After(actual) || actual.After(after) {
 		t.Errorf("Actual: %s; Expected between: %s and %s", actual, before, after)
 	}
+}
+
+func BenchmarkParseNow(b *testing.B) {
+	var t time.Time
+	var err error
+	value := "now-5s"
+
+	for i := 0; i < b.N; i++ {
+		t, err = ParseNow(time.ANSIC, value)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+	_ = t
+}
+
+func BenchmarkParseUsingMap(b *testing.B) {
+	var t time.Time
+	var err error
+	value := "end-1mo"
+
+	m := make(map[string]time.Time)
+	m["end"] = time.Now()
+
+	for i := 0; i < b.N; i++ {
+		t, err = ParseWithMap(time.ANSIC, value, m)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+	_ = t
 }

@@ -3,47 +3,64 @@
 Parse will return the time corresponding to the layout and value.  It also parses floating point
 epoch values, and values of "now", "now+DURATION", and "now-DURATION".
 
-In addition to the duration abbreviations recognized by time.ParseDuration, it recognizes the
-following abbreviations:
+In addition to the duration abbreviations recognized by
+time.ParseDuration, it recognizes various tokens for days, weeks,
+months, and years.
 
-#### year
+## Examples
 
-* y
-
-#### month
-
-* mo
-* mon
-* mth
-* mn
-
-#### week
-
-* w
-
-#### day
-
-* d
-
-## Example
+`ParseNow` can parse time values that are relative to the current
+time, by specifying a string starting with "now", a '+' or '-' byte,
+followed by a time duration.
 
 ```Go
-package main
+    package main
 
-import (
-	"fmt"
-	"os"
-	"time"
+    import (
+    	"fmt"
+    	"os"
+    	"time"
+    	"github.com/karrick/tparse"
+    )
 
-	"github.com/karrick/tparse"
-)
+    func main() {
+    	actual, err := tparse.ParseNow(time.RFC3339, "now+1d3w4mo7y6h4m")
+    	if err != nil {
+    		fmt.Fprintf(os.Stderr, "error: %s\n", err)
+    		os.Exit(1)
+        }
+    	fmt.Printf("time is: %s\n", actual)
+    }
+```
 
-func main() {
-	actual, err := tparse.Parse(time.RFC3339, "now+1d3w4mo7y6h4m")
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: %s\n", err)
-		os.Exit(1)
-	}
-	fmt.Printf("time is: %s\n", actual)
-}
+`ParseWithMap` can parse time values that use a base time other than "now".
+
+```Go
+    package main
+
+    import (
+    	"fmt"
+    	"os"
+    	"time"
+    	"github.com/karrick/tparse"
+    )
+
+    func main() {
+    	start, err := tparse.ParseNow(time.RFC3339, "now")
+    	if err != nil {
+    		fmt.Fprintf(os.Stderr, "error: %s\n", err)
+    		os.Exit(1)
+    	}
+
+        m := make(map[string]time.Time)
+        m["start"] = start
+
+    	end, err := tparse.ParseWithMap(time.RFC3339, "start+8h", m)
+    	if err != nil {
+    		fmt.Fprintf(os.Stderr, "error: %s\n", err)
+    		os.Exit(1)
+    	}
+
+    	fmt.Printf("start: %s; end: %s\n", start, end)
+    }
 ```
