@@ -1,7 +1,8 @@
 # tparse
 
-Parse will return the time corresponding to the layout and value.  It also parses floating point
-epoch values, and values of "now", "now+DURATION", and "now-DURATION".
+Parse will return the time corresponding to the layout and value.  It
+also parses floating point epoch values, and values of "now",
+"now+DURATION", and "now-DURATION".
 
 In addition to the duration abbreviations recognized by
 time.ParseDuration, it recognizes various tokens for days, weeks,
