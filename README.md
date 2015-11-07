@@ -8,6 +8,12 @@ In addition to the duration abbreviations recognized by
 time.ParseDuration, it recognizes various tokens for days, weeks,
 months, and years.
 
+## Documentation
+
+In addition to this handy README.md file, documentation is available
+in godoc format at
+[![GoDoc](https://godoc.org/github.com/karrick/tparse?status.svg)](https://godoc.org/github.com/karrick/tparse).
+
 ## Examples
 
 `ParseNow` can parse time values that are relative to the current
