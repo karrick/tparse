@@ -1,7 +1,6 @@
 package tparse
 
 import (
-	"bytes"
 	"fmt"
 	"math"
 	"strconv"
@@ -200,30 +199,31 @@ func calcDuration(positive bool, number, unit string) (int, int, int, time.Durat
 	var duration time.Duration
 
 	// NOTE: compare byte slices because some units, i.e. ms, are multi-rune
-	switch {
-	case bytes.Equal([]byte(unit), []byte("d")) || bytes.Equal([]byte(unit), []byte("day")) || bytes.Equal([]byte(unit), []byte("days")):
+	switch unit {
+	case "d", "day", "days":
 		d = value
-	case bytes.Equal([]byte(unit), []byte("w")) || bytes.Equal([]byte(unit), []byte("week")) || bytes.Equal([]byte(unit), []byte("weeks")):
+	case "w", "week", "weeks":
 		d = 7 * value
-	case bytes.Equal([]byte(unit), []byte("mo")) || bytes.Equal([]byte(unit), []byte("mon")) || bytes.Equal([]byte(unit), []byte("month")) || bytes.Equal([]byte(unit), []byte("months")) || bytes.Equal([]byte(unit), []byte("mth")) || bytes.Equal([]byte(unit), []byte("mn")):
+	case "mo", "mon", "month", "months", "mth", "mn":
 		m = value
-	case bytes.Equal([]byte(unit), []byte("y")) || bytes.Equal([]byte(unit), []byte("year")) || bytes.Equal([]byte(unit), []byte("years")):
+	case "y", "year", "years":
 		y = value
-	case bytes.Equal([]byte(unit), []byte("sec")) || bytes.Equal([]byte(unit), []byte("second")) || bytes.Equal([]byte(unit), []byte("seconds")):
+	case "sec", "second", "seconds":
 		duration = time.Duration(value) * time.Second
-	case bytes.Equal([]byte(unit), []byte("min")) || bytes.Equal([]byte(unit), []byte("minute")) || bytes.Equal([]byte(unit), []byte("minutes")):
+	case "min", "minute", "minutes":
 		duration = time.Duration(value) * time.Minute
-	case bytes.Equal([]byte(unit), []byte("hr")) || bytes.Equal([]byte(unit), []byte("hour")) || bytes.Equal([]byte(unit), []byte("hours")):
+	case "hr", "hour", "hours":
 		duration = time.Duration(value) * time.Hour
-
 	default:
 		duration, err = time.ParseDuration(number + unit)
 	}
+
 	if !positive {
 		y = -y
 		m = -m
 		d = -d
 		duration = -duration
 	}
+
 	return y, m, d, duration, nil
 }
