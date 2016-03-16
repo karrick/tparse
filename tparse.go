@@ -144,7 +144,7 @@ var unitMap = map[string]int64{
 //
 //	func main() {
 //              now := time.Now()
-//		another, err := tparse.AddDuration(now, "now+1d3w4mo7y6h4m")
+//		another, err := tparse.AddDuration(now, "now+1d3w4mo-7y6h4m")
 //		if err != nil {
 //			fmt.Fprintf(os.Stderr, "error: %s\n", err)
 //			os.Exit(1)
@@ -156,10 +156,11 @@ func AddDuration(base time.Time, s string) (time.Time, error) {
 	if len(s) == 0 {
 		return base, nil
 	}
-	var totalYears, totalMonths int64
-	var totalDuration int64
-	var number int64
+	var totalYears, totalMonths, totalDuration float64
+	var number float64
 	var isNegative bool
+	var decimal bool
+	var digits float64
 
 	for s != "" {
 		// consume possible sign
@@ -171,9 +172,19 @@ func AddDuration(base time.Time, s string) (time.Time, error) {
 			s = s[1:]
 		}
 		// consume digits
-		for ; s[0] >= '0' && s[0] <= '9'; s = s[1:] {
-			number *= 10
-			number += int64(s[0] - '0')
+		for ; s[0] == '.' || (s[0] >= '0' && s[0] <= '9'); s = s[1:] {
+			if s[0] == '.' {
+				decimal = true
+				digits = 0
+			} else if decimal {
+				// handle appending new decimal digits
+				digits--
+				number += float64(s[0]-'0') * math.Pow(10, digits)
+				// fmt.Printf("number: %f\n", number)
+			} else {
+				number *= 10
+				number += float64(s[0] - '0')
+			}
 		}
 		if isNegative {
 			number *= -1
@@ -185,9 +196,9 @@ func AddDuration(base time.Time, s string) (time.Time, error) {
 		}
 		unit := s[:i]
 		s = s[i:]
-		// fmt.Printf("number: %d; unit: %q\n", number, unit)
+		// fmt.Printf("number: %f; unit: %q\n", number, unit)
 		if dur, ok := unitMap[unit]; ok {
-			totalDuration += number * dur
+			totalDuration += number * float64(dur)
 		} else {
 			switch unit {
 			case "mo", "mon", "month", "months", "mth", "mn":
@@ -200,6 +211,7 @@ func AddDuration(base time.Time, s string) (time.Time, error) {
 		}
 
 		number = 0
+		decimal = false
 	}
 	return base.AddDate(int(totalYears), int(totalMonths), 0).Add(time.Duration(totalDuration)), nil
 }

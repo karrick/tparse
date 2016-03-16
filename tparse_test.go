@@ -50,6 +50,17 @@ func TestParseNowMinusMilliisecond(t *testing.T) {
 	}
 }
 
+func TestParseLayout(t *testing.T) {
+	actual, err := Parse(time.RFC3339, "2006-01-02T15:04:05Z")
+	if err != nil {
+		t.Errorf("Actual: %#v; Expected: %#v", err, nil)
+	}
+	expected := time.Unix(1136214245, 0)
+	if !actual.Equal(expected) {
+		t.Errorf("Actual: %d; Expected: %d", actual.Unix(), expected.Unix())
+	}
+}
+
 func TestParseNowPlusMilliisecond(t *testing.T) {
 	before := time.Now()
 	actual, err := ParseNow("", "now+10ms")
@@ -63,14 +74,16 @@ func TestParseNowPlusMilliisecond(t *testing.T) {
 	}
 }
 
-func TestParseLayout(t *testing.T) {
-	actual, err := Parse(time.RFC3339, "2006-01-02T15:04:05Z")
+func TestParseNowPlusQuarterDay(t *testing.T) {
+	before := time.Now().UTC().Add(6 * time.Hour)
+	actual, err := ParseNow("", "now+0.25day")
 	if err != nil {
 		t.Errorf("Actual: %#v; Expected: %#v", err, nil)
 	}
-	expected := time.Unix(1136214245, 0)
-	if !actual.Equal(expected) {
-		t.Errorf("Actual: %d; Expected: %d", actual.Unix(), expected.Unix())
+	after := time.Now().UTC().Add(6 * time.Hour)
+	actual = actual.UTC()
+	if before.After(actual) || actual.After(after) {
+		t.Errorf("Actual: %s; Expected between: %s and %s", actual, before, after)
 	}
 }
 
