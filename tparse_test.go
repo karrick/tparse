@@ -102,7 +102,7 @@ func TestParseNowPlusAndMinus(t *testing.T) {
 
 func TestParseNowMinusAndPlus(t *testing.T) {
 	before := time.Now().UTC().Add(-time.Hour*12).AddDate(0, 0, 34).Add(-time.Minute * 56)
-	actual, err := ParseNow("", "now-12h+34day-56m")
+	actual, err := ParseNow("", "now-12hour+34day-56min")
 	if err != nil {
 		t.Errorf("Actual: %#v; Expected: %#v", err, nil)
 	}
@@ -172,4 +172,36 @@ func TestParseNowMinusSecond(t *testing.T) {
 	if before.After(actual) || actual.After(after) {
 		t.Errorf("Actual: %s; Expected between: %s and %s", actual, before, after)
 	}
+}
+
+const benchmarkDuration = "15h"
+
+func BenchmarkTimeParseDuration(b *testing.B) {
+	var d time.Duration
+	var err error
+	var t time.Time
+	epoch := time.Now().UTC()
+
+	for i := 0; i < b.N; i++ {
+		d, err = time.ParseDuration(benchmarkDuration)
+		if err != nil {
+			b.Fatal(err)
+		}
+		t = epoch.Add(d)
+	}
+	_ = t
+}
+
+func BenchmarkCalcDuration(b *testing.B) {
+	var err error
+	var t time.Time
+	epoch := time.Now().UTC()
+
+	for i := 0; i < b.N; i++ {
+		t, err = AddDuration(epoch, benchmarkDuration)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+	_ = t
 }

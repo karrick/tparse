@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"unicode"
 )
 
 // Parse will return the time value corresponding to the specified layout and value.  It also parses
@@ -45,7 +44,7 @@ func Parse(layout, value string) (time.Time, error) {
 //	}
 func ParseNow(layout, value string) (time.Time, error) {
 	if strings.HasPrefix(value, "now") {
-		return addDuration(time.Now(), value[3:])
+		return AddDuration(time.Now(), value[3:])
 	}
 	m := map[string]time.Time{"now": time.Now()}
 	return ParseWithMap(layout, value, m)
@@ -95,7 +94,7 @@ func ParseWithMap(layout, value string, dict map[string]time.Time) (time.Time, e
 		}
 	}
 	if len(matchKey) > 0 {
-		return addDuration(matchTime, value[len(matchKey):])
+		return AddDuration(matchTime, value[len(matchKey):])
 	}
 	return time.Parse(layout, value)
 }
@@ -104,127 +103,103 @@ func fractionToNanos(fraction float64) int64 {
 	return int64(fraction * float64(time.Second/time.Nanosecond))
 }
 
-// on err, returns epoch and error
-func addDuration(base time.Time, text string) (time.Time, error) {
-	if len(text) == 0 {
-		return base, nil
-	}
-	var epoch time.Time
-	var ty, tm, td int
-	var tdur time.Duration
-	var identifier, setComplete bool
-	isPositive := true
-	var indexUnit, indexNumber int
-	var startNumberNextRune bool
-
-	for i, rune := range text {
-		if startNumberNextRune {
-			indexNumber = i
-			startNumberNextRune = false
-		}
-		// [+-]?[0-9]+[^-+0-9]+
-		if identifier {
-			switch {
-			case rune == '+', rune == '-':
-				identifier = false
-				setComplete = true
-				startNumberNextRune = true
-			case unicode.IsDigit(rune):
-				identifier = false
-				setComplete = true
-			}
-			if setComplete {
-				if i > 0 {
-					// we should have all we need for previous set
-					y, m, d, dur, err := calculateDuration(text, isPositive, indexNumber, indexUnit, i)
-					if err != nil {
-						return epoch, err
-					}
-					ty += y
-					tm += m
-					td += d
-					tdur += dur
-					indexNumber = i
-				}
-				switch {
-				case rune == '+':
-					isPositive = true
-				case rune == '-':
-					isPositive = false
-				}
-				setComplete = false
-			}
-		} else { // number
-			switch {
-			case rune == '+':
-				isPositive = true
-				startNumberNextRune = true
-			case rune == '-':
-				isPositive = false
-				startNumberNextRune = true
-			case unicode.IsDigit(rune):
-				// nop
-			default:
-				identifier = true
-				indexUnit = i
-			}
-		}
-	}
-
-	if indexNumber < indexUnit && indexUnit < len(text) {
-		y, m, d, dur, err := calculateDuration(text, isPositive, indexNumber, indexUnit, len(text))
-		if err != nil {
-			return epoch, err
-		}
-		ty += y
-		tm += m
-		td += d
-		tdur += dur
-	} else {
-		return epoch, fmt.Errorf("extra characters: %s", text[indexNumber:])
-	}
-	return base.Add(tdur).AddDate(ty, tm, td), nil
+var unitMap = map[string]int64{
+	"ns":      int64(time.Nanosecond),
+	"us":      int64(time.Microsecond),
+	"µs":      int64(time.Microsecond), // U+00B5 = micro symbol
+	"μs":      int64(time.Microsecond), // U+03BC = Greek letter mu
+	"ms":      int64(time.Millisecond),
+	"s":       int64(time.Second),
+	"sec":     int64(time.Second),
+	"second":  int64(time.Second),
+	"seconds": int64(time.Second),
+	"m":       int64(time.Minute),
+	"min":     int64(time.Minute),
+	"minute":  int64(time.Minute),
+	"minutes": int64(time.Minute),
+	"h":       int64(time.Hour),
+	"hr":      int64(time.Hour),
+	"hour":    int64(time.Hour),
+	"hours":   int64(time.Hour),
+	"d":       int64(time.Hour * 24),
+	"day":     int64(time.Hour * 24),
+	"days":    int64(time.Hour * 24),
+	"w":       int64(time.Hour * 24 * 7),
+	"week":    int64(time.Hour * 24 * 7),
+	"weeks":   int64(time.Hour * 24 * 7),
 }
 
-func calculateDuration(text string, isPositive bool, iNumber, iUnit, end int) (int, int, int, time.Duration, error) {
-	var y, m, d int
-	var duration time.Duration
-
-	number := text[iNumber:iUnit]
-
-	value, err := strconv.Atoi(number)
-	if err != nil {
-		return y, m, d, duration, err
+// AddDuration parses the duration string, and adds it to the base time. On error, it returns the
+// base time and the error.
+//
+//	package main
+//
+//	import (
+//		"fmt"
+//		"os"
+//		"time"
+//
+//		tparse "gopkg.in/karrick/tparse.v2"
+//	)
+//
+//	func main() {
+//              now := time.Now()
+//		another, err := tparse.AddDuration(now, "now+1d3w4mo7y6h4m")
+//		if err != nil {
+//			fmt.Fprintf(os.Stderr, "error: %s\n", err)
+//			os.Exit(1)
+//		}
+//
+//		fmt.Printf("time is: %s\n", another)
+//	}
+func AddDuration(base time.Time, s string) (time.Time, error) {
+	if len(s) == 0 {
+		return base, nil
 	}
+	var totalYears, totalMonths int64
+	var totalDuration int64
+	var number int64
+	var isNegative bool
 
-	unit := text[iUnit:end]
+	for s != "" {
+		// consume possible sign
+		if s[0] == '+' {
+			isNegative = false
+			s = s[1:]
+		} else if s[0] == '-' {
+			isNegative = true
+			s = s[1:]
+		}
+		// consume digits
+		for ; s[0] >= '0' && s[0] <= '9'; s = s[1:] {
+			number *= 10
+			number += int64(s[0] - '0')
+		}
+		if isNegative {
+			number *= -1
+		}
+		// find end of unit
+		var i int
+		for ; i < len(s) && s[i] != '+' && s[i] != '-' && (s[i] < '0' || s[i] > '9'); i++ {
+			// identifier bytes: no-op
+		}
+		unit := s[:i]
+		s = s[i:]
+		// fmt.Printf("number: %d; unit: %q\n", number, unit)
+		if dur, ok := unitMap[unit]; ok {
+			totalDuration += number * dur
+		} else {
+			switch unit {
+			case "mo", "mon", "month", "months", "mth", "mn":
+				totalMonths += number
+			case "y", "year", "years":
+				totalYears += number
+			default:
+				return base, fmt.Errorf("unknown unit in duration: %q", unit)
+			}
+		}
 
-	// NOTE: compare byte slices because some units, i.e. ms, are multi-rune
-	switch unit {
-	case "s", "sec", "second", "seconds":
-		duration = time.Duration(value) * time.Second
-	case "m", "min", "minute", "minutes":
-		duration = time.Duration(value) * time.Minute
-	case "h", "hr", "hour", "hours":
-		duration = time.Duration(value) * time.Hour
-	case "d", "day", "days":
-		d = value
-	case "w", "week", "weeks":
-		d = 7 * value
-	case "mo", "mon", "month", "months", "mth", "mn":
-		m = value
-	case "y", "year", "years":
-		y = value
-	default:
-		duration, err = time.ParseDuration(text[iNumber:end])
+		number = 0
 	}
-
-	if !isPositive {
-		y = -y
-		m = -m
-		d = -d
-		duration = -duration
-	}
-
-	return y, m, d, duration, err
+	return base.AddDate(int(totalYears), int(totalMonths), 0).Add(time.Duration(totalDuration)), nil
 }
