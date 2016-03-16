@@ -32,7 +32,7 @@ func Parse(layout, value string) (time.Time, error) {
 //		"os"
 //		"time"
 //
-//		"github.com/karrick/tparse"
+//		tparse "gopkg.in/karrick/tparse.v2"
 //	)
 //
 //	func main() {
@@ -61,7 +61,7 @@ func ParseNow(layout, value string) (time.Time, error) {
 //		"os"
 //		"time"
 //
-//		"github.com/karrick/tparse"
+//		tparse "gopkg.in/karrick/tparse.v2"
 //	)
 //
 //	func main() {

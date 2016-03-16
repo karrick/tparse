@@ -24,19 +24,19 @@ followed by a time duration.
     package main
 
     import (
-    	"fmt"
-    	"os"
-    	"time"
-    	"github.com/karrick/tparse"
+        "fmt"
+        "os"
+        "time"
+        tparse "gopkg.in/karrick/tparse.v2"
     )
 
     func main() {
-    	actual, err := tparse.ParseNow(time.RFC3339, "now+1d3w4mo7y6h4m")
-    	if err != nil {
-    		fmt.Fprintf(os.Stderr, "error: %s\n", err)
-    		os.Exit(1)
+        actual, err := tparse.ParseNow(time.RFC3339, "now+1d3w4mo7y6h4m")
+        if err != nil {
+            fmt.Fprintf(os.Stderr, "error: %s\n", err)
+            os.Exit(1)
         }
-    	fmt.Printf("time is: %s\n", actual)
+        fmt.Printf("time is: %s\n", actual)
     }
 ```
 
@@ -46,28 +46,28 @@ followed by a time duration.
     package main
 
     import (
-    	"fmt"
-    	"os"
-    	"time"
-    	"github.com/karrick/tparse"
+        "fmt"
+        "os"
+        "time"
+        tparse "gopkg.in/karrick/tparse.v2"
     )
 
     func main() {
-    	start, err := tparse.ParseNow(time.RFC3339, "now")
-    	if err != nil {
-    		fmt.Fprintf(os.Stderr, "error: %s\n", err)
-    		os.Exit(1)
-    	}
+        start, err := tparse.ParseNow(time.RFC3339, "now")
+        if err != nil {
+            fmt.Fprintf(os.Stderr, "error: %s\n", err)
+            os.Exit(1)
+        }
 
         m := make(map[string]time.Time)
         m["start"] = start
 
-    	end, err := tparse.ParseWithMap(time.RFC3339, "start+8h", m)
-    	if err != nil {
-    		fmt.Fprintf(os.Stderr, "error: %s\n", err)
-    		os.Exit(1)
-    	}
+        end, err := tparse.ParseWithMap(time.RFC3339, "start+8h", m)
+        if err != nil {
+            fmt.Fprintf(os.Stderr, "error: %s\n", err)
+            os.Exit(1)
+        }
 
-    	fmt.Printf("start: %s; end: %s\n", start, end)
+        fmt.Printf("start: %s; end: %s\n", start, end)
     }
 ```
