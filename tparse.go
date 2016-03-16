@@ -102,21 +102,21 @@ func fractionToNanos(fraction float64) int64 {
 }
 
 // on err, returns epoch and error
-func addDuration(base time.Time, value string) (time.Time, error) {
-	if len(value) == 0 {
+func addDuration(base time.Time, text string) (time.Time, error) {
+	if len(text) == 0 {
 		return base, nil
 	}
 	var epoch time.Time
 	var ty, tm, td int
 	var tdur time.Duration
 	var identifier, setComplete bool
-	positive := true
-	var iUnit, iNumber int
+	isPositive := true
+	var indexUnit, indexNumber int
 	var startNumberNextRune bool
 
-	for i, rune := range value {
+	for i, rune := range text {
 		if startNumberNextRune {
-			iNumber = i
+			indexNumber = i
 			startNumberNextRune = false
 		}
 		// [+-][0-9]+[^-+0-9]+
@@ -133,7 +133,7 @@ func addDuration(base time.Time, value string) (time.Time, error) {
 			if setComplete {
 				if i > 0 {
 					// we should have all we need for previous set
-					y, m, d, dur, err := bar(value, positive, iNumber, iUnit, i)
+					y, m, d, dur, err := calculateDuration(text, isPositive, indexNumber, indexUnit, i)
 					if err != nil {
 						return epoch, err
 					}
@@ -141,35 +141,35 @@ func addDuration(base time.Time, value string) (time.Time, error) {
 					tm += m
 					td += d
 					tdur += dur
-					iNumber = i
+					indexNumber = i
 				}
 				setComplete = false
 			}
 			switch {
 			case rune == '+':
-				positive = true
+				isPositive = true
 			case rune == '-':
-				positive = false
+				isPositive = false
 			}
 		} else { // number
 			switch {
 			case rune == '+':
-				positive = true
+				isPositive = true
 				startNumberNextRune = true
 			case rune == '-':
-				positive = false
+				isPositive = false
 				startNumberNextRune = true
 			case unicode.IsDigit(rune):
 				// nop
 			default:
 				identifier = true
-				iUnit = i
+				indexUnit = i
 			}
 		}
 	}
 
-	if iNumber < iUnit && iUnit < len(value) {
-		y, m, d, dur, err := bar(value, positive, iNumber, iUnit, len(value))
+	if indexNumber < indexUnit && indexUnit < len(text) {
+		y, m, d, dur, err := calculateDuration(text, isPositive, indexNumber, indexUnit, len(text))
 		if err != nil {
 			return epoch, err
 		}
@@ -178,25 +178,23 @@ func addDuration(base time.Time, value string) (time.Time, error) {
 		td += d
 		tdur += dur
 	} else {
-		return epoch, fmt.Errorf("extra characters: %s", value[iNumber:])
+		return epoch, fmt.Errorf("extra characters: %s", text[indexNumber:])
 	}
 	return base.Add(tdur).AddDate(ty, tm, td), nil
 }
 
-func bar(value string, positive bool, iNumber, iUnit, i int) (int, int, int, time.Duration, error) {
-	number := value[iNumber:iUnit]
-	unit := value[iUnit:i]
-	return calcDuration(positive, number, unit)
-}
-
-func calcDuration(positive bool, number, unit string) (int, int, int, time.Duration, error) {
-	value, err := strconv.Atoi(number)
-	if err != nil {
-		return 0, 0, 0, 0, err
-	}
-
+func calculateDuration(text string, isPositive bool, iNumber, iUnit, end int) (int, int, int, time.Duration, error) {
 	var y, m, d int
 	var duration time.Duration
+
+	number := text[iNumber:iUnit]
+
+	value, err := strconv.Atoi(number)
+	if err != nil {
+		return y, m, d, duration, err
+	}
+
+	unit := text[iUnit:end]
 
 	// NOTE: compare byte slices because some units, i.e. ms, are multi-rune
 	switch unit {
@@ -215,15 +213,15 @@ func calcDuration(positive bool, number, unit string) (int, int, int, time.Durat
 	case "hr", "hour", "hours":
 		duration = time.Duration(value) * time.Hour
 	default:
-		duration, err = time.ParseDuration(number + unit)
+		duration, err = time.ParseDuration(text[iNumber:end])
 	}
 
-	if !positive {
+	if !isPositive {
 		y = -y
 		m = -m
 		d = -d
 		duration = -duration
 	}
 
-	return y, m, d, duration, nil
+	return y, m, d, duration, err
 }
