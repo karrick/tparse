@@ -144,6 +144,132 @@ func TestParseUsingMap(t *testing.T) {
 	}
 }
 
+func TestAddDurationPositiveFractionalYear(t *testing.T) {
+	start, err := Parse(time.RFC3339, "2003-07-02T15:04:05Z")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expected, err := Parse(time.RFC3339, "2006-01-02T15:04:05Z")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	actual, err := AddDuration(start, "+2.5years")
+	if err != nil {
+		t.Errorf("Actual: %#v; Expected: %#v", err, nil)
+	}
+
+	if actual != expected {
+		t.Errorf("Actual: %s; Expected: %s", actual, expected)
+	}
+}
+
+func TestAddDurationNegativeFractionalYear(t *testing.T) {
+	start, err := Parse(time.RFC3339, "2006-01-02T15:04:05Z")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expected, err := Parse(time.RFC3339, "2003-07-02T15:04:05Z")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	actual, err := AddDuration(start, "-2.5years")
+	if err != nil {
+		t.Errorf("Actual: %#v; Expected: %#v", err, nil)
+	}
+
+	if actual != expected {
+		t.Errorf("Actual: %s; Expected: %s", actual, expected)
+	}
+}
+
+func TestAddDurationPositiveFractionalMonth(t *testing.T) {
+	start, err := Parse(time.RFC3339, "2003-06-01T15:04:05Z")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expected, err := Parse(time.RFC3339, "2003-08-16T15:04:05Z")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	actual, err := AddDuration(start, "+2.5months")
+	if err != nil {
+		t.Errorf("Actual: %#v; Expected: %#v", err, nil)
+	}
+
+	if actual != expected {
+		t.Errorf("Actual: %s; Expected: %s", actual, expected)
+	}
+}
+
+func TestAddDurationNegativeFractionalMonth(t *testing.T) {
+	start, err := Parse(time.RFC3339, "2003-08-16T15:04:05Z")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expected, err := Parse(time.RFC3339, "2003-06-01T15:04:05Z")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	actual, err := AddDuration(start, "-2.5months")
+	if err != nil {
+		t.Errorf("Actual: %#v; Expected: %#v", err, nil)
+	}
+
+	if actual != expected {
+		t.Errorf("Actual: %s; Expected: %s", actual, expected)
+	}
+}
+
+func TestAddDurationPositiveFractionalDay(t *testing.T) {
+	start, err := Parse(time.RFC3339, "2003-06-01T15:04:05Z")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expected, err := Parse(time.RFC3339, "2003-06-04T03:04:05Z")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	actual, err := AddDuration(start, "+2.5days")
+	if err != nil {
+		t.Errorf("Actual: %#v; Expected: %#v", err, nil)
+	}
+
+	if actual != expected {
+		t.Errorf("Actual: %s; Expected: %s", actual, expected)
+	}
+}
+
+func TestAddDurationNegativeFractionalDay(t *testing.T) {
+	start, err := Parse(time.RFC3339, "2003-06-04T03:04:05Z")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expected, err := Parse(time.RFC3339, "2003-06-01T15:04:05Z")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	actual, err := AddDuration(start, "-2.5days")
+	if err != nil {
+		t.Errorf("Actual: %#v; Expected: %#v", err, nil)
+	}
+
+	if actual != expected {
+		t.Errorf("Actual: %s; Expected: %s", actual, expected)
+	}
+}
+
 func BenchmarkParseNow(b *testing.B) {
 	var t time.Time
 	var err error
@@ -205,7 +331,7 @@ func BenchmarkTimeParseDuration(b *testing.B) {
 	_ = t
 }
 
-func BenchmarkCalcDuration(b *testing.B) {
+func BenchmarkAddDuration(b *testing.B) {
 	var err error
 	var t time.Time
 	epoch := time.Now().UTC()

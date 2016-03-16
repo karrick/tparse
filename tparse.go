@@ -103,30 +103,30 @@ func fractionToNanos(fraction float64) int64 {
 	return int64(fraction * float64(time.Second/time.Nanosecond))
 }
 
-var unitMap = map[string]int64{
-	"ns":      int64(time.Nanosecond),
-	"us":      int64(time.Microsecond),
-	"µs":      int64(time.Microsecond), // U+00B5 = micro symbol
-	"μs":      int64(time.Microsecond), // U+03BC = Greek letter mu
-	"ms":      int64(time.Millisecond),
-	"s":       int64(time.Second),
-	"sec":     int64(time.Second),
-	"second":  int64(time.Second),
-	"seconds": int64(time.Second),
-	"m":       int64(time.Minute),
-	"min":     int64(time.Minute),
-	"minute":  int64(time.Minute),
-	"minutes": int64(time.Minute),
-	"h":       int64(time.Hour),
-	"hr":      int64(time.Hour),
-	"hour":    int64(time.Hour),
-	"hours":   int64(time.Hour),
-	"d":       int64(time.Hour * 24),
-	"day":     int64(time.Hour * 24),
-	"days":    int64(time.Hour * 24),
-	"w":       int64(time.Hour * 24 * 7),
-	"week":    int64(time.Hour * 24 * 7),
-	"weeks":   int64(time.Hour * 24 * 7),
+var unitMap = map[string]float64{
+	"ns":      float64(time.Nanosecond),
+	"us":      float64(time.Microsecond),
+	"µs":      float64(time.Microsecond), // U+00B5 = micro symbol
+	"μs":      float64(time.Microsecond), // U+03BC = Greek letter mu
+	"ms":      float64(time.Millisecond),
+	"s":       float64(time.Second),
+	"sec":     float64(time.Second),
+	"second":  float64(time.Second),
+	"seconds": float64(time.Second),
+	"m":       float64(time.Minute),
+	"min":     float64(time.Minute),
+	"minute":  float64(time.Minute),
+	"minutes": float64(time.Minute),
+	"h":       float64(time.Hour),
+	"hr":      float64(time.Hour),
+	"hour":    float64(time.Hour),
+	"hours":   float64(time.Hour),
+	"d":       float64(time.Hour * 24),
+	"day":     float64(time.Hour * 24),
+	"days":    float64(time.Hour * 24),
+	"w":       float64(time.Hour * 24 * 7),
+	"week":    float64(time.Hour * 24 * 7),
+	"weeks":   float64(time.Hour * 24 * 7),
 }
 
 // AddDuration parses the duration string, and adds it to the base time. On error, it returns the
@@ -156,11 +156,9 @@ func AddDuration(base time.Time, s string) (time.Time, error) {
 	if len(s) == 0 {
 		return base, nil
 	}
-	var totalYears, totalMonths, totalDuration float64
-	var number float64
 	var isNegative bool
-	var decimal bool
-	var digits float64
+	var exp, whole, fraction int64
+	var number, totalYears, totalMonths, totalDays, totalDuration float64
 
 	for s != "" {
 		// consume possible sign
@@ -172,19 +170,23 @@ func AddDuration(base time.Time, s string) (time.Time, error) {
 			s = s[1:]
 		}
 		// consume digits
-		for ; s[0] == '.' || (s[0] >= '0' && s[0] <= '9'); s = s[1:] {
+		for ; (s[0] >= '0' && s[0] <= '9') || s[0] == '.'; s = s[1:] {
 			if s[0] == '.' {
-				decimal = true
-				digits = 0
-			} else if decimal {
-				// handle appending new decimal digits
-				digits--
-				number += float64(s[0]-'0') * math.Pow(10, digits)
-				// fmt.Printf("number: %f\n", number)
+				if exp > 0 {
+					return base, fmt.Errorf("invalid floating point number format: two decimal points found")
+				}
+				exp = 1
+				fraction = 0
+			} else if exp > 0 {
+				exp++
+				fraction = 10*fraction + int64(s[0]-'0')
 			} else {
-				number *= 10
-				number += float64(s[0] - '0')
+				whole = 10*whole + int64(s[0]-'0')
 			}
+		}
+		number = float64(whole)
+		if exp > 0 {
+			number += float64(fraction) * math.Pow(10, float64(1-exp))
 		}
 		if isNegative {
 			number *= -1
@@ -195,10 +197,9 @@ func AddDuration(base time.Time, s string) (time.Time, error) {
 			// identifier bytes: no-op
 		}
 		unit := s[:i]
-		s = s[i:]
 		// fmt.Printf("number: %f; unit: %q\n", number, unit)
-		if dur, ok := unitMap[unit]; ok {
-			totalDuration += number * float64(dur)
+		if duration, ok := unitMap[unit]; ok {
+			totalDuration += number * duration
 		} else {
 			switch unit {
 			case "mo", "mon", "month", "months", "mth", "mn":
@@ -210,8 +211,32 @@ func AddDuration(base time.Time, s string) (time.Time, error) {
 			}
 		}
 
-		number = 0
-		decimal = false
+		s = s[i:]
+		whole = 0
 	}
-	return base.AddDate(int(totalYears), int(totalMonths), 0).Add(time.Duration(totalDuration)), nil
+	if totalYears != 0 {
+		whole := math.Trunc(totalYears)
+		fraction := totalYears - whole
+		totalYears = whole
+		totalMonths += 12 * fraction
+	}
+	if totalMonths != 0 {
+		whole := math.Trunc(totalMonths)
+		fraction := totalMonths - whole
+		totalMonths = whole
+		totalDays += 30 * fraction
+	}
+	if totalDays != 0 {
+		whole := math.Trunc(totalDays)
+		fraction := totalDays - whole
+		totalDays = whole
+		totalDuration += (fraction * 24.0 * float64(time.Hour))
+	}
+	if totalYears != 0 || totalMonths != 0 || totalDays != 0 {
+		base = base.AddDate(int(totalYears), int(totalMonths), int(totalDays))
+	}
+	if totalDuration != 0 {
+		base = base.Add(time.Duration(totalDuration))
+	}
+	return base, nil
 }
