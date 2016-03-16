@@ -5,6 +5,8 @@ import (
 	"time"
 )
 
+const benchmarkString = "now-2second"
+
 func TestParseFloatingEpoch(t *testing.T) {
 	actual, err := Parse("", "1445535988.5")
 	if err != nil {
@@ -132,10 +134,9 @@ func TestParseUsingMap(t *testing.T) {
 func BenchmarkParseNow(b *testing.B) {
 	var t time.Time
 	var err error
-	value := "now-5s"
 
 	for i := 0; i < b.N; i++ {
-		t, err = ParseNow(time.ANSIC, value)
+		t, err = ParseNow(time.ANSIC, benchmarkString)
 		if err != nil {
 			b.Fatal(err)
 		}

@@ -44,6 +44,9 @@ func Parse(layout, value string) (time.Time, error) {
 //		fmt.Printf("time is: %s\n", actual)
 //	}
 func ParseNow(layout, value string) (time.Time, error) {
+	if strings.HasPrefix(value, "now") {
+		return addDuration(time.Now(), value[3:])
+	}
 	m := map[string]time.Time{"now": time.Now()}
 	return ParseWithMap(layout, value, m)
 }

@@ -10,10 +10,9 @@ import (
 func BenchmarkGoParseTime(b *testing.B) {
 	var t time.Time
 	var err error
-	value := "now-5s"
 
 	for i := 0; i < b.N; i++ {
-		t, err = goparsetime.Parsetime(value)
+		t, err = goparsetime.Parsetime(benchmarkString)
 		if err != nil {
 			b.Fatal(err)
 		}
