@@ -119,7 +119,7 @@ func addDuration(base time.Time, text string) (time.Time, error) {
 			indexNumber = i
 			startNumberNextRune = false
 		}
-		// [+-][0-9]+[^-+0-9]+
+		// [+-]?[0-9]+[^-+0-9]+
 		if identifier {
 			switch {
 			case rune == '+', rune == '-':
@@ -198,6 +198,12 @@ func calculateDuration(text string, isPositive bool, iNumber, iUnit, end int) (i
 
 	// NOTE: compare byte slices because some units, i.e. ms, are multi-rune
 	switch unit {
+	case "s", "sec", "second", "seconds":
+		duration = time.Duration(value) * time.Second
+	case "m", "min", "minute", "minutes":
+		duration = time.Duration(value) * time.Minute
+	case "h", "hr", "hour", "hours":
+		duration = time.Duration(value) * time.Hour
 	case "d", "day", "days":
 		d = value
 	case "w", "week", "weeks":
@@ -206,12 +212,6 @@ func calculateDuration(text string, isPositive bool, iNumber, iUnit, end int) (i
 		m = value
 	case "y", "year", "years":
 		y = value
-	case "sec", "second", "seconds":
-		duration = time.Duration(value) * time.Second
-	case "min", "minute", "minutes":
-		duration = time.Duration(value) * time.Minute
-	case "hr", "hour", "hours":
-		duration = time.Duration(value) * time.Hour
 	default:
 		duration, err = time.ParseDuration(text[iNumber:end])
 	}
