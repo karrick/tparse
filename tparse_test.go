@@ -159,3 +159,16 @@ func BenchmarkParseUsingMap(b *testing.B) {
 	}
 	_ = t
 }
+
+func TestParseNowMinusSecond(t *testing.T) {
+	before := time.Now().UTC().Add(-2 * time.Second)
+	actual, err := ParseNow("", "now-2second")
+	if err != nil {
+		t.Errorf("Actual: %#v; Expected: %#v", err, nil)
+	}
+	after := time.Now().UTC().Add(-2 * time.Second)
+	actual = actual.UTC()
+	if before.After(actual) || actual.After(after) {
+		t.Errorf("Actual: %s; Expected between: %s and %s", actual, before, after)
+	}
+}

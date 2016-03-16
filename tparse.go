@@ -209,6 +209,13 @@ func calcDuration(positive bool, number, unit string) (int, int, int, time.Durat
 		m = value
 	case bytes.Equal([]byte(unit), []byte("y")) || bytes.Equal([]byte(unit), []byte("year")) || bytes.Equal([]byte(unit), []byte("years")):
 		y = value
+	case bytes.Equal([]byte(unit), []byte("sec")) || bytes.Equal([]byte(unit), []byte("second")) || bytes.Equal([]byte(unit), []byte("seconds")):
+		duration = time.Duration(value) * time.Second
+	case bytes.Equal([]byte(unit), []byte("min")) || bytes.Equal([]byte(unit), []byte("minute")) || bytes.Equal([]byte(unit), []byte("minutes")):
+		duration = time.Duration(value) * time.Minute
+	case bytes.Equal([]byte(unit), []byte("hr")) || bytes.Equal([]byte(unit), []byte("hour")) || bytes.Equal([]byte(unit), []byte("hours")):
+		duration = time.Duration(value) * time.Hour
+
 	default:
 		duration, err = time.ParseDuration(number + unit)
 	}
