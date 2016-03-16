@@ -146,13 +146,13 @@ func addDuration(base time.Time, text string) (time.Time, error) {
 					tdur += dur
 					indexNumber = i
 				}
+				switch {
+				case rune == '+':
+					isPositive = true
+				case rune == '-':
+					isPositive = false
+				}
 				setComplete = false
-			}
-			switch {
-			case rune == '+':
-				isPositive = true
-			case rune == '-':
-				isPositive = false
 			}
 		} else { // number
 			switch {
