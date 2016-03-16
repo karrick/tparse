@@ -85,6 +85,32 @@ func TestParseNowPlusDay(t *testing.T) {
 	}
 }
 
+func TestParseNowPlusAndMinus(t *testing.T) {
+	before := time.Now().UTC().Add(time.Hour).AddDate(0, 0, -1).Add(time.Minute)
+	actual, err := ParseNow("", "now+1h-1d+1m")
+	if err != nil {
+		t.Errorf("Actual: %#v; Expected: %#v", err, nil)
+	}
+	after := time.Now().UTC().Add(time.Hour).AddDate(0, 0, -1).Add(time.Minute)
+	actual = actual.UTC()
+	if before.After(actual) || actual.After(after) {
+		t.Errorf("Actual: %s; Expected between: %s and %s", actual, before, after)
+	}
+}
+
+func TestParseNowMinusAndPlus(t *testing.T) {
+	before := time.Now().UTC().Add(-time.Hour*12).AddDate(0, 0, 34).Add(-time.Minute * 56)
+	actual, err := ParseNow("", "now-12h+34day-56m")
+	if err != nil {
+		t.Errorf("Actual: %#v; Expected: %#v", err, nil)
+	}
+	after := time.Now().UTC().Add(-time.Hour*12).AddDate(0, 0, 34).Add(-time.Minute * 56)
+	actual = actual.UTC()
+	if before.After(actual) || actual.After(after) {
+		t.Errorf("Actual: %s; Expected between: %s and %s", actual, before, after)
+	}
+}
+
 func TestParseUsingMap(t *testing.T) {
 	before := time.Now().UTC()
 	dict := map[string]time.Time{

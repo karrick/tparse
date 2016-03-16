@@ -82,41 +82,18 @@ func ParseWithMap(layout, value string, dict map[string]time.Time) (time.Time, e
 		nanos := fractionToNanos(epoch - trunc)
 		return time.Unix(int64(trunc), int64(nanos)), nil
 	}
-	var base time.Time
-	var y, m, d int
-	var duration time.Duration
-	var direction = 1
-	var err error
 
+	var matchKey []byte
+	var matchTime time.Time
+	// find longest matching key in dict
 	for k, v := range dict {
-		if strings.HasPrefix(value, k) {
-			base = v
-			if len(value) > len(k) {
-				// maybe has +, -
-				switch dir := value[len(k)]; dir {
-				case '+':
-					// no-op
-				case '-':
-					direction = -1
-				default:
-					return base, fmt.Errorf("expected '+' or '-': %q", dir)
-				}
-				var nv string
-				y, m, d, nv = ymd(value[len(k)+1:])
-				if len(nv) > 0 {
-					duration, err = time.ParseDuration(nv)
-					if err != nil {
-						return base, err
-					}
-				}
-			}
-			if direction < 0 {
-				y = -y
-				m = -m
-				d = -d
-			}
-			return base.Add(time.Duration(int(duration)*direction)).AddDate(y, m, d), nil
+		if strings.HasPrefix(value, k) && len(k) > len(matchKey) {
+			matchKey = []byte(k)
+			matchTime = v
 		}
+	}
+	if len(matchKey) > 0 {
+		return addDuration(matchTime, value[len(matchKey):])
 	}
 	return time.Parse(layout, value)
 }
@@ -125,48 +102,121 @@ func fractionToNanos(fraction float64) int64 {
 	return int64(fraction * float64(time.Second/time.Nanosecond))
 }
 
-func ymd(value string) (int, int, int, string) {
-	// alternating numbers and strings
-	var y, m, d int
-	var accum int     // accumulates digits
-	var unit []byte   // accumulates units
-	var unproc []byte // accumulate unprocessed durations to return
-
-	unitComplete := func() {
-		// NOTE: compare byte slices because some units, i.e. ms, are multi-rune
-		if bytes.Equal(unit, []byte{'d'}) || bytes.Equal(unit, []byte{'d', 'a', 'y'}) || bytes.Equal(unit, []byte{'d', 'a', 'y', 's'}) {
-			d += accum
-		} else if bytes.Equal(unit, []byte{'w'}) || bytes.Equal(unit, []byte{'w', 'e', 'e', 'k'}) || bytes.Equal(unit, []byte{'w', 'e', 'e', 'k', 's'}) {
-			d += 7 * accum
-		} else if bytes.Equal(unit, []byte{'m', 'o'}) || bytes.Equal(unit, []byte{'m', 'o', 'n'}) || bytes.Equal(unit, []byte{'m', 'o', 'n', 't', 'h'}) || bytes.Equal(unit, []byte{'m', 'o', 'n', 't', 'h', 's'}) || bytes.Equal(unit, []byte{'m', 't', 'h'}) || bytes.Equal(unit, []byte{'m', 'n'}) {
-			m += accum
-		} else if bytes.Equal(unit, []byte{'y'}) || bytes.Equal(unit, []byte{'y', 'e', 'a', 'r'}) || bytes.Equal(unit, []byte{'y', 'e', 'a', 'r', 's'}) {
-			y += accum
-		} else {
-			unproc = append(append(unproc, strconv.Itoa(accum)...), unit...)
-		}
+// on err, returns epoch and error
+func addDuration(base time.Time, value string) (time.Time, error) {
+	if len(value) == 0 {
+		return base, nil
 	}
+	var epoch time.Time
+	var ty, tm, td int
+	var tdur time.Duration
+	var identifier, setComplete bool
+	positive := true
+	var iUnit, iNumber int
+	var startNumberNextRune bool
 
-	expectDigit := true
-	for _, rune := range value {
-		if unicode.IsDigit(rune) {
-			if expectDigit {
-				accum = accum*10 + int(rune-'0')
-			} else {
-				unitComplete()
-				unit = unit[:0]
-				accum = int(rune - '0')
+	for i, rune := range value {
+		if startNumberNextRune {
+			iNumber = i
+			startNumberNextRune = false
+		}
+		// [+-][0-9]+[^-+0-9]+
+		if identifier {
+			switch {
+			case rune == '+', rune == '-':
+				identifier = false
+				setComplete = true
+				startNumberNextRune = true
+			case unicode.IsDigit(rune):
+				identifier = false
+				setComplete = true
 			}
-			continue
+			if setComplete {
+				if i > 0 {
+					// we should have all we need for previous set
+					y, m, d, dur, err := bar(value, positive, iNumber, iUnit, i)
+					if err != nil {
+						return epoch, err
+					}
+					ty += y
+					tm += m
+					td += d
+					tdur += dur
+					iNumber = i
+				}
+				setComplete = false
+			}
+			switch {
+			case rune == '+':
+				positive = true
+			case rune == '-':
+				positive = false
+			}
+		} else { // number
+			switch {
+			case rune == '+':
+				positive = true
+				startNumberNextRune = true
+			case rune == '-':
+				positive = false
+				startNumberNextRune = true
+			case unicode.IsDigit(rune):
+				// nop
+			default:
+				identifier = true
+				iUnit = i
+			}
 		}
-		unit = append(unit, string(rune)...)
-		expectDigit = false
 	}
-	if len(unit) > 0 {
-		unitComplete()
-		accum = 0
-		unit = unit[:0]
+
+	if iNumber < iUnit && iUnit < len(value) {
+		y, m, d, dur, err := bar(value, positive, iNumber, iUnit, len(value))
+		if err != nil {
+			return epoch, err
+		}
+		ty += y
+		tm += m
+		td += d
+		tdur += dur
+	} else {
+		return epoch, fmt.Errorf("extra characters: %s", value[iNumber:])
 	}
-	// log.Printf("y: %d; m: %d; d: %d; nv: %q", y, m, d, unproc)
-	return y, m, d, string(unproc)
+	return base.Add(tdur).AddDate(ty, tm, td), nil
+}
+
+func bar(value string, positive bool, iNumber, iUnit, i int) (int, int, int, time.Duration, error) {
+	number := value[iNumber:iUnit]
+	unit := value[iUnit:i]
+	return calcDuration(positive, number, unit)
+}
+
+func calcDuration(positive bool, number, unit string) (int, int, int, time.Duration, error) {
+	value, err := strconv.Atoi(number)
+	if err != nil {
+		return 0, 0, 0, 0, err
+	}
+
+	var y, m, d int
+	var duration time.Duration
+
+	// NOTE: compare byte slices because some units, i.e. ms, are multi-rune
+	switch {
+	case bytes.Equal([]byte(unit), []byte("d")) || bytes.Equal([]byte(unit), []byte("day")) || bytes.Equal([]byte(unit), []byte("days")):
+		d = value
+	case bytes.Equal([]byte(unit), []byte("w")) || bytes.Equal([]byte(unit), []byte("week")) || bytes.Equal([]byte(unit), []byte("weeks")):
+		d = 7 * value
+	case bytes.Equal([]byte(unit), []byte("mo")) || bytes.Equal([]byte(unit), []byte("mon")) || bytes.Equal([]byte(unit), []byte("month")) || bytes.Equal([]byte(unit), []byte("months")) || bytes.Equal([]byte(unit), []byte("mth")) || bytes.Equal([]byte(unit), []byte("mn")):
+		m = value
+	case bytes.Equal([]byte(unit), []byte("y")) || bytes.Equal([]byte(unit), []byte("year")) || bytes.Equal([]byte(unit), []byte("years")):
+		y = value
+	default:
+		duration, err = time.ParseDuration(number + unit)
+	}
+	if !positive {
+		y = -y
+		m = -m
+		d = -d
+		duration = -duration
+	}
+	return y, m, d, duration, nil
 }
