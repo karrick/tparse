@@ -129,8 +129,8 @@ var unitMap = map[string]float64{
 	"weeks":   float64(time.Hour * 24 * 7),
 }
 
-// AddDuration parses the duration string, and adds it to the base time. On error, it returns the
-// base time and the error.
+// AddDuration parses the duration string, and adds the calculated duration value to the provided
+// base time. On error, it returns the base time and the error.
 //
 //	package main
 //
