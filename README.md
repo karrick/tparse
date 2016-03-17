@@ -90,9 +90,9 @@ time:
  * Minute: m, min, minute, minutes
  * Hour: h, hr, hour, hours
  * Day: d, day, days
- * Week: w, week, weeks
- * Month: mo, mon, month, months, mth, mn
- * Year: y, year, years
+ * Week: w, wk, week, weeks
+ * Month: mo, mon, month, months
+ * Year: y, yr, year, years
 
 ```Go
     package main

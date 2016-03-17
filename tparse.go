@@ -125,6 +125,7 @@ var unitMap = map[string]float64{
 	"w":       float64(time.Hour * 24 * 7),
 	"week":    float64(time.Hour * 24 * 7),
 	"weeks":   float64(time.Hour * 24 * 7),
+	"wk":      float64(time.Hour * 24 * 7),
 }
 
 // AddDuration parses the duration string, and adds the calculated duration value to the provided
@@ -142,9 +143,9 @@ var unitMap = map[string]float64{
 // * Minute: m, min, minute, minutes
 // * Hour: h, hr, hour, hours
 // * Day: d, day, days
-// * Week: w, week, weeks
-// * Month: mo, mon, month, months, mth, mn
-// * Year: y, year, years
+// * Week: w, wk, week, weeks
+// * Month: mo, mon, month, months
+// * Year: y, yr, year, years
 //
 //	package main
 //
@@ -227,9 +228,9 @@ func AddDuration(base time.Time, s string) (time.Time, error) {
 			totalDuration += number * duration
 		} else {
 			switch unit {
-			case "mo", "mon", "month", "months", "mth", "mn":
+			case "mo", "mon", "month", "months":
 				totalMonths += number
-			case "y", "year", "years":
+			case "y", "yr", "year", "years":
 				totalYears += number
 			default:
 				return base, fmt.Errorf("unknown unit in duration: %q", unit)
