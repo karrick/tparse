@@ -54,28 +54,27 @@ func ParseNow(layout, value string) (time.Time, error) {
 // and if the value string starts with one of the keys in the map, it replaces the string with the
 // corresponding time.Time value.
 //
-//	package main
+//     package main
 //
-//	import (
-//		"fmt"
-//		"os"
-//		"time"
+//     import (
+//         "fmt"
+//         "os"
+//         "time"
+//         tparse "gopkg.in/karrick/tparse.v2"
+//     )
 //
-//		tparse "gopkg.in/karrick/tparse.v2"
-//	)
+//     func main() {
+//         m := make(map[string]time.Time)
+//         m["end"] = time.Now()
 //
-//	func main() {
-//		m := make(map[string]time.Time)
-//		m["start"] = start
+//         start, err := tparse.ParseWithMap(time.RFC3339, "end-12h", m)
+//         if err != nil {
+//             fmt.Fprintf(os.Stderr, "error: %s\n", err)
+//             os.Exit(1)
+//         }
 //
-//		end, err := tparse.ParseWithMap(time.RFC3339, "start+8h", m)
-//		if err != nil {
-//			fmt.Fprintf(os.Stderr, "error: %s\n", err)
-//			os.Exit(1)
-//		}
-//
-//		fmt.Printf("start: %s; end: %s\n", start, end)
-//	}
+//         fmt.Printf("start: %s; end: %s\n", start, end)
+//     }
 func ParseWithMap(layout, value string, dict map[string]time.Time) (time.Time, error) {
 	// find longest matching key in dict
 	var matchKey string
@@ -185,20 +184,31 @@ func AddDuration(base time.Time, s string) (time.Time, error) {
 			s = s[1:]
 		}
 		// consume digits
-		for ; (s[0] >= '0' && s[0] <= '9') || s[0] == '.'; s = s[1:] {
-			if s[0] == '.' {
+		var done bool
+		for !done {
+			c := s[0]
+			switch {
+			case c >= '0' && c <= '9':
+				d := int64(c - '0')
+				if exp > 0 {
+					exp++
+					fraction = 10*fraction + d
+				} else {
+					whole = 10*whole + d
+				}
+				s = s[1:]
+			case c == '.':
 				if exp > 0 {
 					return base, fmt.Errorf("invalid floating point number format: two decimal points found")
 				}
 				exp = 1
 				fraction = 0
-			} else if exp > 0 {
-				exp++
-				fraction = 10*fraction + int64(s[0]-'0')
-			} else {
-				whole = 10*whole + int64(s[0]-'0')
+				s = s[1:]
+			default:
+				done = true
 			}
 		}
+		// adjust number
 		number = float64(whole)
 		if exp > 0 {
 			number += float64(fraction) * math.Pow(10, float64(1-exp))
