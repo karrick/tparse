@@ -131,6 +131,22 @@ var unitMap = map[string]float64{
 // AddDuration parses the duration string, and adds the calculated duration value to the provided
 // base time. On error, it returns the base time and the error.
 //
+// Like `time.ParseDuration`, this accepts multiple fractional scalars, so "now+1.5days-3.21hours"
+// is evaluated properly.
+//
+// The following tokens may be used to specify the respective unit of time:
+//
+// * Nanosecond: ns
+// * Microsecond: us, µs (U+00B5 = micro symbol), μs (U+03BC = Greek letter mu)
+// * Millisecond: ms
+// * Second: s, sec, second, seconds
+// * Minute: m, min, minute, minutes
+// * Hour: h, hr, hour, hours
+// * Day: d, day, days
+// * Week: w, week, weeks
+// * Month: mo, mon, month, months, mth, mn
+// * Year: y, year, years
+//
 //	package main
 //
 //	import (

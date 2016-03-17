@@ -61,16 +61,10 @@ followed by a time duration.
     )
 
     func main() {
-        start, err := tparse.ParseNow(time.RFC3339, "now")
-        if err != nil {
-            fmt.Fprintf(os.Stderr, "error: %s\n", err)
-            os.Exit(1)
-        }
-
         m := make(map[string]time.Time)
-        m["start"] = start
+        m["end"] = time.Now()
 
-        end, err := tparse.ParseWithMap(time.RFC3339, "start+8h", m)
+        start, err := tparse.ParseWithMap(time.RFC3339, "end-12h", m)
         if err != nil {
             fmt.Fprintf(os.Stderr, "error: %s\n", err)
             os.Exit(1)
@@ -86,8 +80,22 @@ followed by a time duration.
 add it to a known time. This function is used by the other library
 functions to parse all duration strings.
 
+The following tokens may be used to specify the respective unit of
+time:
+
+* Nanosecond: ns
+* Microsecond: us, µs (U+00B5 = micro symbol), μs (U+03BC = Greek letter mu)
+* Millisecond: ms
+* Second: s, sec, second, seconds
+* Minute: m, min, minute, minutes
+* Hour: h, hr, hour, hours
+* Day: d, day, days
+* Week: w, week, weeks
+* Month: mo, mon, month, months, mth, mn
+* Year: y, year, years
+
 ```Go
-    ackage main
+    package main
 
     import (
         "fmt"
@@ -99,7 +107,7 @@ functions to parse all duration strings.
 
     func main() {
         now := time.Now()
-        another, err := tparse.AddDuration(now, "now+1d3w4mo-7y6h4m")
+        another, err := tparse.AddDuration(now, "+1d3w4mo-7y6h4m")
         if err != nil {
             fmt.Fprintf(os.Stderr, "error: %s\n", err)
             os.Exit(1)

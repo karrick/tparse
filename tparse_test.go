@@ -173,69 +173,6 @@ func TestParseWithMap(t *testing.T) {
 	}
 }
 
-func BenchmarkParseWithMapEpoch(b *testing.B) {
-	var t time.Time
-	var err error
-	value := "1458179403.12345"
-
-	for i := 0; i < b.N; i++ {
-		t, err = ParseWithMap(time.ANSIC, value, nil)
-		if err != nil {
-			b.Fatal(err)
-		}
-	}
-	_ = t
-}
-
-func BenchmarkParseWithMapKeyedValue(b *testing.B) {
-	var t time.Time
-	var err error
-	value := "end-1mo"
-
-	m := make(map[string]time.Time)
-	m["end"] = time.Now()
-
-	for i := 0; i < b.N; i++ {
-		t, err = ParseWithMap(time.ANSIC, value, m)
-		if err != nil {
-			b.Fatal(err)
-		}
-	}
-	_ = t
-}
-
-const benchmarkDuration = "15h"
-
-func BenchmarkTimeParseDuration(b *testing.B) {
-	var d time.Duration
-	var err error
-	var t time.Time
-	epoch := time.Now().UTC()
-
-	for i := 0; i < b.N; i++ {
-		d, err = time.ParseDuration(benchmarkDuration)
-		if err != nil {
-			b.Fatal(err)
-		}
-		t = epoch.Add(d)
-	}
-	_ = t
-}
-
-func BenchmarkAddDuration(b *testing.B) {
-	var err error
-	var t time.Time
-	epoch := time.Now().UTC()
-
-	for i := 0; i < b.N; i++ {
-		t, err = AddDuration(epoch, benchmarkDuration)
-		if err != nil {
-			b.Fatal(err)
-		}
-	}
-	_ = t
-}
-
 // ParseNow
 
 func TestParseNow(t *testing.T) {
@@ -341,21 +278,6 @@ func TestParseNowMinusAndPlus(t *testing.T) {
 	}
 }
 
-const benchmarkString = "now-2second"
-
-func BenchmarkParseNow(b *testing.B) {
-	var t time.Time
-	var err error
-
-	for i := 0; i < b.N; i++ {
-		t, err = ParseNow("", benchmarkString)
-		if err != nil {
-			b.Fatal(err)
-		}
-	}
-	_ = t
-}
-
 // Parse
 
 func TestParseLayout(t *testing.T) {
@@ -367,30 +289,4 @@ func TestParseLayout(t *testing.T) {
 	if !actual.Equal(expected) {
 		t.Errorf("Actual: %d; Expected: %d", actual.Unix(), expected.Unix())
 	}
-}
-
-func BenchmarkTimeParseRFC3339(b *testing.B) {
-	var t time.Time
-	var err error
-
-	for i := 0; i < b.N; i++ {
-		t, err = time.Parse(time.RFC3339, rfc3339)
-		if err != nil {
-			b.Fatal(err)
-		}
-	}
-	_ = t
-}
-
-func BenchmarkParseRFC3339(b *testing.B) {
-	var t time.Time
-	var err error
-
-	for i := 0; i < b.N; i++ {
-		t, err = Parse(time.RFC3339, rfc3339)
-		if err != nil {
-			b.Fatal(err)
-		}
-	}
-	_ = t
 }
