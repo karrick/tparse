@@ -83,16 +83,16 @@ functions to parse all duration strings.
 The following tokens may be used to specify the respective unit of
 time:
 
-* Nanosecond: ns
-* Microsecond: us, µs (U+00B5 = micro symbol), μs (U+03BC = Greek letter mu)
-* Millisecond: ms
-* Second: s, sec, second, seconds
-* Minute: m, min, minute, minutes
-* Hour: h, hr, hour, hours
-* Day: d, day, days
-* Week: w, week, weeks
-* Month: mo, mon, month, months, mth, mn
-* Year: y, year, years
+ * Nanosecond: ns
+ * Microsecond: us, µs (U+00B5 = micro symbol), μs (U+03BC = Greek letter mu)
+ * Millisecond: ms
+ * Second: s, sec, second, seconds
+ * Minute: m, min, minute, minutes
+ * Hour: h, hr, hour, hours
+ * Day: d, day, days
+ * Week: w, week, weeks
+ * Month: mo, mon, month, months, mth, mn
+ * Year: y, year, years
 
 ```Go
     package main
