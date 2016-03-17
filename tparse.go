@@ -11,7 +11,7 @@ import (
 // Parse will return the time value corresponding to the specified layout and value.  It also parses
 // floating point and integer epoch values.
 func Parse(layout, value string) (time.Time, error) {
-	return ParseWithMap(layout, value, make(map[string]time.Time))
+	return ParseWithMap(layout, value, nil)
 }
 
 // ParseNow will return the time value corresponding to the specified layout and value.  It also
@@ -46,8 +46,7 @@ func ParseNow(layout, value string) (time.Time, error) {
 	if strings.HasPrefix(value, "now") {
 		return AddDuration(time.Now(), value[3:])
 	}
-	m := map[string]time.Time{"now": time.Now()}
-	return ParseWithMap(layout, value, m)
+	return ParseWithMap(layout, value, nil)
 }
 
 // ParseWithMap will return the time value corresponding to the specified layout and value.  It also
@@ -78,24 +77,24 @@ func ParseNow(layout, value string) (time.Time, error) {
 //		fmt.Printf("start: %s; end: %s\n", start, end)
 //	}
 func ParseWithMap(layout, value string, dict map[string]time.Time) (time.Time, error) {
+	// find longest matching key in dict
+	var matchKey string
+	for k := range dict {
+		if strings.HasPrefix(value, k) && len(k) > len(matchKey) {
+			matchKey = k
+		}
+	}
+	if len(matchKey) > 0 {
+		return AddDuration(dict[matchKey], value[len(matchKey):])
+	}
+
+	// takes about 90ns even if fails
 	if epoch, err := strconv.ParseFloat(value, 64); err == nil && epoch >= 0 {
 		trunc := math.Trunc(epoch)
 		nanos := fractionToNanos(epoch - trunc)
 		return time.Unix(int64(trunc), int64(nanos)), nil
 	}
 
-	var matchKey []byte
-	var matchTime time.Time
-	// find longest matching key in dict
-	for k, v := range dict {
-		if strings.HasPrefix(value, k) && len(k) > len(matchKey) {
-			matchKey = []byte(k)
-			matchTime = v
-		}
-	}
-	if len(matchKey) > 0 {
-		return AddDuration(matchTime, value[len(matchKey):])
-	}
 	return time.Parse(layout, value)
 }
 
