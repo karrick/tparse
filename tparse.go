@@ -30,7 +30,7 @@ func Parse(layout, value string) (time.Time, error) {
 //		"os"
 //		"time"
 //
-//		tparse "gopkg.in/karrick/tparse.v2"
+//		"github.com/karrick/tparse"
 //	)
 //
 //	func main() {
@@ -60,7 +60,7 @@ func ParseNow(layout, value string) (time.Time, error) {
 //         "fmt"
 //         "os"
 //         "time"
-//         tparse "gopkg.in/karrick/tparse.v2"
+//         "github.com/karrick/tparse"
 //     )
 //
 //     func main() {
@@ -154,7 +154,7 @@ var unitMap = map[string]float64{
 //		"os"
 //		"time"
 //
-//		tparse "gopkg.in/karrick/tparse.v2"
+//		"github.com/karrick/tparse"
 //	)
 //
 //	func main() {

@@ -33,7 +33,7 @@ followed by a time duration.
         "fmt"
         "os"
         "time"
-        tparse "gopkg.in/karrick/tparse.v2"
+        "github.com/karrick/tparse"
     )
 
     func main() {
@@ -57,7 +57,7 @@ followed by a time duration.
         "fmt"
         "os"
         "time"
-        tparse "gopkg.in/karrick/tparse.v2"
+        "github.com/karrick/tparse"
     )
 
     func main() {
@@ -102,7 +102,7 @@ time:
         "os"
         "time"
 
-        tparse "gopkg.in/karrick/tparse.v2"
+        "github.com/karrick/tparse"
     )
 
     func main() {
