@@ -1,10 +1,11 @@
-package tparse
+package tparse_test
 
 import (
 	"testing"
 	"time"
 
 	"github.com/etdub/goparsetime"
+	"github.com/karrick/tparse"
 )
 
 const benchmarkDuration = "15h45m38s"
@@ -15,7 +16,7 @@ func BenchmarkAddDuration(b *testing.B) {
 	epoch := time.Now().UTC()
 
 	for i := 0; i < b.N; i++ {
-		t, err = AddDuration(epoch, benchmarkDuration)
+		t, err = tparse.AddDuration(epoch, benchmarkDuration)
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -61,7 +62,7 @@ func BenchmarkParseNowMinusDuration(b *testing.B) {
 	var err error
 
 	for i := 0; i < b.N; i++ {
-		t, err = ParseNow("", benchmarkNowMinusDuration)
+		t, err = tparse.ParseNow("", benchmarkNowMinusDuration)
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -90,7 +91,7 @@ func BenchmarkParseWithMapEpoch(b *testing.B) {
 	value := "1458179403.12345"
 
 	for i := 0; i < b.N; i++ {
-		t, err = ParseWithMap(time.ANSIC, value, nil)
+		t, err = tparse.ParseWithMap(time.ANSIC, value, nil)
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -107,7 +108,7 @@ func BenchmarkParseWithMapKeyedValue(b *testing.B) {
 	m["end"] = time.Now()
 
 	for i := 0; i < b.N; i++ {
-		t, err = ParseWithMap(time.ANSIC, value, m)
+		t, err = tparse.ParseWithMap(time.ANSIC, value, m)
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -124,7 +125,7 @@ func BenchmarkParseWithMapKeyedValueAndDuration(b *testing.B) {
 	m["end"] = time.Now()
 
 	for i := 0; i < b.N; i++ {
-		t, err = ParseWithMap(time.ANSIC, value, m)
+		t, err = tparse.ParseWithMap(time.ANSIC, value, m)
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -139,7 +140,7 @@ func BenchmarkParseRFC3339(b *testing.B) {
 	var err error
 
 	for i := 0; i < b.N; i++ {
-		t, err = Parse(time.RFC3339, rfc3339)
+		t, err = tparse.Parse(time.RFC3339, rfc3339)
 		if err != nil {
 			b.Fatal(err)
 		}
