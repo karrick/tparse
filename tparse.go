@@ -178,9 +178,15 @@ func AddDuration(base time.Time, s string) (time.Time, error) {
 	for s != "" {
 		// consume possible sign
 		if s[0] == '+' {
+			if len(s) == 1 {
+				return base, fmt.Errorf("cannot parse sign without digits: '+'")
+			}
 			isNegative = false
 			s = s[1:]
 		} else if s[0] == '-' {
+			if len(s) == 1 {
+				return base, fmt.Errorf("cannot parse sign without digits: '-'")
+			}
 			isNegative = true
 			s = s[1:]
 		}

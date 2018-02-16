@@ -11,6 +11,21 @@ const rfc3339 = "2006-01-02T15:04:05Z"
 
 // AddDuration
 
+func TestAddDurationRejectsSignWithoutDigits(t *testing.T) {
+	t.Run("negative", func(t *testing.T) {
+		_, err := tparse.AddDuration(time.Now(), "-")
+		if err == nil {
+			t.Errorf("(GOT): %v; (WNT): %v", err, "cannot parse sign without digits")
+		}
+	})
+	t.Run("positive", func(t *testing.T) {
+		_, err := tparse.AddDuration(time.Now(), "+")
+		if err == nil {
+			t.Errorf("(GOT): %v; (WNT): %v", err, "cannot parse sign without digits")
+		}
+	})
+}
+
 func TestAddDurationPositiveFractionalYear(t *testing.T) {
 	start, err := tparse.Parse(time.RFC3339, "2003-07-02T15:04:05Z")
 	if err != nil {
