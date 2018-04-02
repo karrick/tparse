@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/etdub/goparsetime"
-	"github.com/karrick/tparse"
+	tparse "github.com/karrick/tparse/v2"
 )
 
 const benchmarkDuration = "15h45m38s"
