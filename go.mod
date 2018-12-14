@@ -1,3 +1,1 @@
-module "github.com/karrick/tparse"
-
-require "github.com/etdub/goparsetime" v0.0.0-20160315173935-ea17b0ac3318
+module github.com/karrick/tparse

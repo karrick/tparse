@@ -116,3 +116,9 @@ time:
         fmt.Printf("time is: %s\n", another)
     }
 ```
+
+## Benchmark against goparsetime
+
+```Bash
+GO111MODULE=on go test -bench=. -tags goparsetime
+```
