@@ -102,34 +102,3 @@ func TestParseUsingMap(t *testing.T) {
 		t.Errorf("Actual: %s; Expected between: %s and %s", actual, before, after)
 	}
 }
-
-func BenchmarkParseNow(b *testing.B) {
-	var t time.Time
-	var err error
-	value := "now-5s"
-
-	for i := 0; i < b.N; i++ {
-		t, err = ParseNow(time.ANSIC, value)
-		if err != nil {
-			b.Fatal(err)
-		}
-	}
-	_ = t
-}
-
-func BenchmarkParseUsingMap(b *testing.B) {
-	var t time.Time
-	var err error
-	value := "end-1mo"
-
-	m := make(map[string]time.Time)
-	m["end"] = time.Now()
-
-	for i := 0; i < b.N; i++ {
-		t, err = ParseWithMap(time.ANSIC, value, m)
-		if err != nil {
-			b.Fatal(err)
-		}
-	}
-	_ = t
-}

@@ -1,13 +1,11 @@
-package tparse_test
+package benchmarks
 
 import (
 	"testing"
 	"time"
 
-	tparse "github.com/karrick/tparse/v2"
+	"github.com/karrick/tparse"
 )
-
-const benchmarkDuration = "15h45m38s"
 
 func BenchmarkAddDuration(b *testing.B) {
 	var err error
@@ -53,8 +51,6 @@ func BenchmarkAddDurationStandardLibrary(b *testing.B) {
 }
 
 //
-
-const benchmarkNowMinusDuration = "now-21second"
 
 func BenchmarkParseNowMinusDuration(b *testing.B) {
 	var t time.Time
@@ -138,6 +134,37 @@ func BenchmarkParseRFC3339StandardLibrary(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		t, err = time.Parse(time.RFC3339, rfc3339)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+	_ = t
+}
+
+func BenchmarkParseNow(b *testing.B) {
+	var t time.Time
+	var err error
+	value := "now-5s"
+
+	for i := 0; i < b.N; i++ {
+		t, err = tparse.ParseNow(time.ANSIC, value)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+	_ = t
+}
+
+func BenchmarkParseUsingMap(b *testing.B) {
+	var t time.Time
+	var err error
+	value := "end-1mo"
+
+	m := make(map[string]time.Time)
+	m["end"] = time.Now()
+
+	for i := 0; i < b.N; i++ {
+		t, err = tparse.ParseWithMap(time.ANSIC, value, m)
 		if err != nil {
 			b.Fatal(err)
 		}

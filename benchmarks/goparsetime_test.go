@@ -1,6 +1,4 @@
-// +build goparsetime
-
-package tparse
+package benchmarks
 
 import (
 	"testing"
@@ -9,7 +7,7 @@ import (
 	"github.com/etdub/goparsetime"
 )
 
-func BenchmarkGoParseTime(b *testing.B) {
+func BenchmarkParseNowMinusDurationGoParseTime(b *testing.B) {
 	var t time.Time
 	var err error
 	value := "now-5s"
