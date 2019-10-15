@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/karrick/tparse"
+	"github.com/karrick/tparse/v2"
 )
 
 func BenchmarkAddDuration(b *testing.B) {
