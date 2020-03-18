@@ -272,3 +272,17 @@ func AddDuration(base time.Time, s string) (time.Time, error) {
 	}
 	return base, nil
 }
+
+// AbsoluteDuration returns the time.Duration between the base time and the
+// result of adding the duration string. This takes into account the number of
+// days in the intervening months and years.
+func AbsoluteDuration(base time.Time, duration string) (time.Duration, error) {
+	var d time.Duration
+
+	t2, err := AddDuration(base, duration)
+	if err != nil {
+		return d, err
+	}
+
+	return t2.Sub(base), nil
+}

@@ -308,3 +308,14 @@ func TestParseLayout(t *testing.T) {
 		t.Errorf("Actual: %d; Expected: %d", actual.Unix(), expected.Unix())
 	}
 }
+
+func TestAbsoluteDuration(t *testing.T) {
+	t1 := time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)
+
+	d, err := AbsoluteDuration(t1, "1.5month")
+	ensureError(t, err)
+
+	if got, want := d.String(), "1080h0m0s"; got != want {
+		t.Errorf("GOT: %v; WANT: %v", got, want)
+	}
+}
