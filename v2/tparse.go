@@ -8,95 +8,6 @@ import (
 	"time"
 )
 
-// Parse will return the time value corresponding to the specified layout and value.  It also parses
-// floating point and integer epoch values.
-func Parse(layout, value string) (time.Time, error) {
-	return ParseWithMap(layout, value, nil)
-}
-
-// ParseNow will return the time value corresponding to the specified layout and value.  It also
-// parses floating point and integer epoch values.  It recognizes the special string `now` and
-// replaces that with the time ParseNow is called.  This allows a suffix adding or subtracting
-// various values from the base time.  For instance, ParseNow(time.ANSIC, "now+1d") will return a
-// time corresponding to 24 hours from the moment the function is invoked.
-//
-// In addition to the duration abbreviations recognized by time.ParseDuration, it recognizes various
-// tokens for days, weeks, months, and years.
-//
-//	package main
-//
-//	import (
-//		"fmt"
-//		"os"
-//		"time"
-//
-//		"github.com/karrick/tparse"
-//	)
-//
-//	func main() {
-//		actual, err := tparse.ParseNow(time.RFC3339, "now+1d3w4mo7y6h4m")
-//		if err != nil {
-//			fmt.Fprintf(os.Stderr, "error: %s\n", err)
-//			os.Exit(1)
-//		}
-//
-//		fmt.Printf("time is: %s\n", actual)
-//	}
-func ParseNow(layout, value string) (time.Time, error) {
-	if strings.HasPrefix(value, "now") {
-		return AddDuration(time.Now(), value[3:])
-	}
-	return ParseWithMap(layout, value, nil)
-}
-
-// ParseWithMap will return the time value corresponding to the specified layout and value.  It also
-// parses floating point and integer epoch values.  It accepts a map of strings to time.Time values,
-// and if the value string starts with one of the keys in the map, it replaces the string with the
-// corresponding time.Time value.
-//
-//     package main
-//
-//     import (
-//         "fmt"
-//         "os"
-//         "time"
-//         "github.com/karrick/tparse"
-//     )
-//
-//     func main() {
-//         m := make(map[string]time.Time)
-//         m["end"] = time.Now()
-//
-//         start, err := tparse.ParseWithMap(time.RFC3339, "end-12h", m)
-//         if err != nil {
-//             fmt.Fprintf(os.Stderr, "error: %s\n", err)
-//             os.Exit(1)
-//         }
-//
-//         fmt.Printf("start: %s; end: %s\n", start, end)
-//     }
-func ParseWithMap(layout, value string, dict map[string]time.Time) (time.Time, error) {
-	// find longest matching key in dict
-	var matchKey string
-	for k := range dict {
-		if strings.HasPrefix(value, k) && len(k) > len(matchKey) {
-			matchKey = k
-		}
-	}
-	if len(matchKey) > 0 {
-		return AddDuration(dict[matchKey], value[len(matchKey):])
-	}
-
-	// takes about 90ns even if fails
-	if epoch, err := strconv.ParseFloat(value, 64); err == nil && epoch >= 0 {
-		trunc := math.Trunc(epoch)
-		nanos := fractionToNanos(epoch - trunc)
-		return time.Unix(int64(trunc), int64(nanos)), nil
-	}
-
-	return time.Parse(layout, value)
-}
-
 func fractionToNanos(fraction float64) int64 {
 	return int64(fraction * float64(time.Second/time.Nanosecond))
 }
@@ -126,6 +37,20 @@ var unitMap = map[string]float64{
 	"week":    float64(time.Hour * 24 * 7),
 	"weeks":   float64(time.Hour * 24 * 7),
 	"wk":      float64(time.Hour * 24 * 7),
+}
+
+// AbsoluteDuration returns the time.Duration between the base time and the
+// result of adding the duration string. This takes into account the number of
+// days in the intervening months and years.
+func AbsoluteDuration(base time.Time, duration string) (time.Duration, error) {
+	var d time.Duration
+
+	t2, err := AddDuration(base, duration)
+	if err != nil {
+		return d, err
+	}
+
+	return t2.Sub(base), nil
 }
 
 // AddDuration parses the duration string, and adds the calculated duration value to the provided
@@ -273,16 +198,91 @@ func AddDuration(base time.Time, s string) (time.Time, error) {
 	return base, nil
 }
 
-// AbsoluteDuration returns the time.Duration between the base time and the
-// result of adding the duration string. This takes into account the number of
-// days in the intervening months and years.
-func AbsoluteDuration(base time.Time, duration string) (time.Duration, error) {
-	var d time.Duration
+// Parse will return the time value corresponding to the specified layout and value.  It also parses
+// floating point and integer epoch values.
+func Parse(layout, value string) (time.Time, error) {
+	return ParseWithMap(layout, value, nil)
+}
 
-	t2, err := AddDuration(base, duration)
-	if err != nil {
-		return d, err
+// ParseNow will return the time value corresponding to the specified layout and value.  It also
+// parses floating point and integer epoch values.  It recognizes the special string `now` and
+// replaces that with the time ParseNow is called.  This allows a suffix adding or subtracting
+// various values from the base time.  For instance, ParseNow(time.ANSIC, "now+1d") will return a
+// time corresponding to 24 hours from the moment the function is invoked.
+//
+// In addition to the duration abbreviations recognized by time.ParseDuration, it recognizes various
+// tokens for days, weeks, months, and years.
+//
+//	package main
+//
+//	import (
+//		"fmt"
+//		"os"
+//		"time"
+//
+//		"github.com/karrick/tparse"
+//	)
+//
+//	func main() {
+//		actual, err := tparse.ParseNow(time.RFC3339, "now+1d3w4mo7y6h4m")
+//		if err != nil {
+//			fmt.Fprintf(os.Stderr, "error: %s\n", err)
+//			os.Exit(1)
+//		}
+//
+//		fmt.Printf("time is: %s\n", actual)
+//	}
+func ParseNow(layout, value string) (time.Time, error) {
+	if strings.HasPrefix(value, "now") {
+		return AddDuration(time.Now(), value[3:])
+	}
+	return ParseWithMap(layout, value, nil)
+}
+
+// ParseWithMap will return the time value corresponding to the specified layout and value.  It also
+// parses floating point and integer epoch values.  It accepts a map of strings to time.Time values,
+// and if the value string starts with one of the keys in the map, it replaces the string with the
+// corresponding time.Time value.
+//
+//     package main
+//
+//     import (
+//         "fmt"
+//         "os"
+//         "time"
+//         "github.com/karrick/tparse"
+//     )
+//
+//     func main() {
+//         m := make(map[string]time.Time)
+//         m["end"] = time.Now()
+//
+//         start, err := tparse.ParseWithMap(time.RFC3339, "end-12h", m)
+//         if err != nil {
+//             fmt.Fprintf(os.Stderr, "error: %s\n", err)
+//             os.Exit(1)
+//         }
+//
+//         fmt.Printf("start: %s; end: %s\n", start, end)
+//     }
+func ParseWithMap(layout, value string, dict map[string]time.Time) (time.Time, error) {
+	// find longest matching key in dict
+	var matchKey string
+	for k := range dict {
+		if strings.HasPrefix(value, k) && len(k) > len(matchKey) {
+			matchKey = k
+		}
+	}
+	if len(matchKey) > 0 {
+		return AddDuration(dict[matchKey], value[len(matchKey):])
 	}
 
-	return t2.Sub(base), nil
+	// takes about 90ns even if fails
+	if epoch, err := strconv.ParseFloat(value, 64); err == nil && epoch >= 0 {
+		trunc := math.Trunc(epoch)
+		nanos := fractionToNanos(epoch - trunc)
+		return time.Unix(int64(trunc), int64(nanos)), nil
+	}
+
+	return time.Parse(layout, value)
 }
