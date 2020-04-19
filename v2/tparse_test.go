@@ -313,12 +313,24 @@ func TestParseLayout(t *testing.T) {
 func ExampleAbsoluteDuration() {
 	t1 := time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)
 
-	d, err := AbsoluteDuration(t1, "1.5month")
+	d1, err := AbsoluteDuration(t1, "1.5month")
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	fmt.Println(d)
-	// Output: 1080h0m0s
+	fmt.Println(d1)
+
+	t2 := time.Date(2020, time.February, 10, 23, 0, 0, 0, time.UTC)
+
+	d2, err := AbsoluteDuration(t2, "1.5month")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Println(d2)
+	// Output:
+	// 1080h0m0s
+	// 1056h0m0s
 }
