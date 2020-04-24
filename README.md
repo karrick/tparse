@@ -117,6 +117,55 @@ time:
     }
 ```
 
+### AbsoluteDuration
+
+When you would rather have the `time.Duration` representation of a
+duration string, there is a function for that, but with a
+caveat.
+
+First, not every month has 30 days, and therefore Go does not have a
+`time.Duration` type constant to represent one month. 
+
+When I add one month to February 3, do I get March 3 or March 4?
+Depends on what the year is and whether or not that year is a leap
+year.
+
+Is one month always 30 days? Is one month 31 days, or 28, or 29? I did
+not want to have to answer this question, so I defaulted to saying the
+length of one month depends on which month and year, and I allowed the
+Go standard library to add duration concretely to a given moment in
+time.
+
+Consider the below two examples of calling `AbsoluteDuration` with the
+same duration string, but different base times.
+
+```Go
+func ExampleAbsoluteDuration() {
+    t1 := time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)
+
+    d1, err := AbsoluteDuration(t1, "1.5month")
+    if err != nil {
+        fmt.Println(err)
+        return
+    }
+
+    fmt.Println(d1)
+
+    t2 := time.Date(2020, time.February, 10, 23, 0, 0, 0, time.UTC)
+
+    d2, err := AbsoluteDuration(t2, "1.5month")
+    if err != nil {
+        fmt.Println(err)
+        return
+    }
+
+    fmt.Println(d2)
+    // Output:
+    // 1080h0m0s
+    // 1056h0m0s
+}
+```
+
 ## Benchmark against goparsetime
 
 ```Bash
