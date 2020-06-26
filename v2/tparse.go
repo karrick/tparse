@@ -1,6 +1,7 @@
 package tparse
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"strconv"
@@ -117,7 +118,7 @@ func AddDuration(base time.Time, s string) (time.Time, error) {
 		}
 		// consume digits
 		var done bool
-		for !done {
+		for !done && len(s) > 0 {
 			c := s[0]
 			switch {
 			case c >= '0' && c <= '9':
@@ -164,6 +165,9 @@ func AddDuration(base time.Time, s string) (time.Time, error) {
 			case "y", "yr", "year", "years":
 				totalYears += number
 			default:
+				if unit == "" {
+					return base, errors.New("duration missing units")
+				}
 				return base, fmt.Errorf("unknown unit in duration: %q", unit)
 			}
 		}

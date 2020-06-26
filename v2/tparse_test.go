@@ -151,6 +151,33 @@ func TestAddDurationNegativeFractionalDay(t *testing.T) {
 	}
 }
 
+func TestAddDurationMissignUnits(t *testing.T) {
+	t.Run("zero", func(t *testing.T) {
+		_, err := AddDuration(time.Now(), "0")
+		ensureError(t, err, "duration missing units")
+	})
+
+	t.Run("plus zero", func(t *testing.T) {
+		_, err := AddDuration(time.Now(), "+0")
+		ensureError(t, err, "duration missing units")
+	})
+
+	t.Run("minus zero", func(t *testing.T) {
+		_, err := AddDuration(time.Now(), "-0")
+		ensureError(t, err, "duration missing units")
+	})
+
+	t.Run("one", func(t *testing.T) {
+		_, err := AddDuration(time.Now(), "1")
+		ensureError(t, err, "duration missing units")
+	})
+
+	t.Run("float", func(t *testing.T) {
+		_, err := AddDuration(time.Now(), "12.3")
+		ensureError(t, err, "duration missing units")
+	})
+}
+
 // ParseWithMap
 
 func TestParseWithMapFloatingEpochPositive(t *testing.T) {
