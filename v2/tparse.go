@@ -270,6 +270,10 @@ func ParseNow(layout, value string) (time.Time, error) {
 //         fmt.Printf("start: %s; end: %s\n", start, end)
 //     }
 func ParseWithMap(layout, value string, dict map[string]time.Time) (time.Time, error) {
+	return ParseWithMapInLocation(layout, value, dict, nil)
+}
+
+func ParseWithMapInLocation(layout, value string, dict map[string]time.Time, loc *time.Location) (time.Time, error) {
 	// find longest matching key in dict
 	var matchKey string
 	for k := range dict {
@@ -279,6 +283,10 @@ func ParseWithMap(layout, value string, dict map[string]time.Time) (time.Time, e
 	}
 	if len(matchKey) > 0 {
 		return AddDuration(dict[matchKey], value[len(matchKey):])
+	}
+
+	if loc != nil {
+		return time.ParseInLocation(layout, value, loc)
 	}
 
 	// takes about 90ns even if fails
