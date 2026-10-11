@@ -92,14 +92,17 @@ func ParseWithMap(layout, value string, dict map[string]time.Time) (time.Time, e
 		if strings.HasPrefix(value, k) {
 			base = v
 			if len(value) > len(k) {
-				// maybe has +, -
-				switch dir := value[len(k)]; dir {
+				dir := value[len(k)]
+				switch dir {
 				case '+':
 					// no-op
 				case '-':
 					direction = -1
 				default:
 					return base, fmt.Errorf("expected '+' or '-': %q", dir)
+				}
+				if len(value) == len(k)+1 {
+					return base, fmt.Errorf("cannot parse sign without digits: %q", dir)
 				}
 				var nv string
 				y, m, d, nv = ymd(value[len(k)+1:])
@@ -148,8 +151,10 @@ func ymd(value string) (int, int, int, string) {
 	}
 
 	expectDigit := true
+	seenDigit := false
 	for _, rune := range value {
 		if unicode.IsDigit(rune) {
+			seenDigit = true
 			if expectDigit {
 				accum = accum*10 + int(rune-'0')
 			} else {
@@ -162,7 +167,7 @@ func ymd(value string) (int, int, int, string) {
 		unit = append(unit, string(rune)...)
 		expectDigit = false
 	}
-	if len(unit) > 0 {
+	if len(unit) > 0 || seenDigit && expectDigit {
 		unitComplete()
 		accum = 0
 		unit = unit[:0]

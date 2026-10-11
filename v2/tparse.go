@@ -94,6 +94,9 @@ func AbsoluteDuration(base time.Time, duration string) (time.Duration, error) {
 //		fmt.Printf("time is: %s\n", another)
 //	}
 func AddDuration(base time.Time, s string) (time.Time, error) {
+	if strings.HasPrefix(s, "now") {
+		s = s[3:]
+	}
 	if len(s) == 0 {
 		return base, nil
 	}
@@ -174,6 +177,8 @@ func AddDuration(base time.Time, s string) (time.Time, error) {
 
 		s = s[i:]
 		whole = 0
+		exp = 0
+		fraction = 0
 	}
 	if totalYears != 0 {
 		whole := math.Trunc(totalYears)

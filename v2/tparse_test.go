@@ -176,6 +176,102 @@ func TestAddDurationMissignUnits(t *testing.T) {
 		_, err := AddDuration(time.Now(), "12.3")
 		ensureError(t, err, "duration missing units")
 	})
+
+	t.Run("twenty", func(t *testing.T) {
+		_, err := AddDuration(time.Now(), "20")
+		ensureError(t, err, "duration missing units")
+	})
+
+	t.Run("plus twenty", func(t *testing.T) {
+		_, err := AddDuration(time.Now(), "+20")
+		ensureError(t, err, "duration missing units")
+	})
+
+	t.Run("minus twenty", func(t *testing.T) {
+		_, err := AddDuration(time.Now(), "-20")
+		ensureError(t, err, "duration missing units")
+	})
+
+	t.Run("now plus twenty", func(t *testing.T) {
+		_, err := AddDuration(time.Now(), "now+20")
+		ensureError(t, err, "duration missing units")
+	})
+
+	t.Run("now minus twenty", func(t *testing.T) {
+		_, err := AddDuration(time.Now(), "now-20")
+		ensureError(t, err, "duration missing units")
+	})
+
+	t.Run("now float missing unit", func(t *testing.T) {
+		_, err := AddDuration(time.Now(), "now+20.5")
+		ensureError(t, err, "duration missing units")
+	})
+
+	t.Run("compound missing unit", func(t *testing.T) {
+		_, err := AddDuration(time.Now(), "now+1h20")
+		ensureError(t, err, "duration missing units")
+	})
+
+	t.Run("compound plus missing unit", func(t *testing.T) {
+		_, err := AddDuration(time.Now(), "now+1h+20")
+		ensureError(t, err, "duration missing units")
+	})
+
+	t.Run("valid now prefix", func(t *testing.T) {
+		now := time.Now()
+		res, err := AddDuration(now, "now+1h")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !res.After(now) {
+			t.Errorf("Expected res after now")
+		}
+	})
+}
+
+func TestParseNowMissingUnits(t *testing.T) {
+	t.Run("now plus twenty", func(t *testing.T) {
+		_, err := ParseNow("", "now+20")
+		ensureError(t, err, "duration missing units")
+	})
+
+	t.Run("now minus twenty", func(t *testing.T) {
+		_, err := ParseNow("", "now-20")
+		ensureError(t, err, "duration missing units")
+	})
+
+	t.Run("now float missing unit", func(t *testing.T) {
+		_, err := ParseNow("", "now+20.5")
+		ensureError(t, err, "duration missing units")
+	})
+
+	t.Run("compound missing unit", func(t *testing.T) {
+		_, err := ParseNow("", "now+1h20")
+		ensureError(t, err, "duration missing units")
+	})
+
+	t.Run("compound plus missing unit", func(t *testing.T) {
+		_, err := ParseNow("", "now+1h+20")
+		ensureError(t, err, "duration missing units")
+	})
+}
+
+func TestParseWithMapMissingUnits(t *testing.T) {
+	t0 := time.Now()
+	dict := map[string]time.Time{"start": t0}
+	_, err := ParseWithMap("", "start+20", dict)
+	ensureError(t, err, "duration missing units")
+
+	_, err = ParseWithMapInLocation("", "start+20", dict, time.UTC)
+	ensureError(t, err, "duration missing units")
+}
+
+func TestAbsoluteDurationMissingUnits(t *testing.T) {
+	_, err := AbsoluteDuration(time.Now(), "now+20")
+	ensureError(t, err, "duration missing units")
+
+	_, err = AbsoluteDuration(time.Now(), "+20")
+	ensureError(t, err, "duration missing units")
 }
 
 // ParseWithMap

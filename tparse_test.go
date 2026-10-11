@@ -102,3 +102,20 @@ func TestParseUsingMap(t *testing.T) {
 		t.Errorf("Actual: %s; Expected between: %s and %s", actual, before, after)
 	}
 }
+
+func TestParseNowMissingUnits(t *testing.T) {
+	_, err := ParseNow("", "now+20")
+	if err == nil {
+		t.Errorf("Expected error for now+20, got nil")
+	}
+
+	_, err = ParseNow("", "now-20")
+	if err == nil {
+		t.Errorf("Expected error for now-20, got nil")
+	}
+
+	_, err = ParseNow("", "now+")
+	if err == nil {
+		t.Errorf("Expected error for now+, got nil")
+	}
+}
